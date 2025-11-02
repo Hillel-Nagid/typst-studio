@@ -42,7 +42,6 @@ impl Compiler {
         let (request_tx, mut request_rx) = mpsc::channel::<CompileRequest>(10);
         let (result_tx, result_rx) = mpsc::channel::<CompileResult>(10);
 
-        // Spawn compiler thread
         tokio::spawn(async move {
             while let Some(request) = request_rx.recv().await {
                 let result = Self::compile_internal(request).await;
@@ -71,8 +70,6 @@ impl Compiler {
     /// Internal compilation implementation
     async fn compile_internal(request: CompileRequest) -> CompileResult {
         let mut diagnostics = DiagnosticList::new();
-
-        // Create world
         let world = match SystemWorld::new(request.root.clone(), request.main_file.clone()) {
             Ok(w) => w,
             Err(e) => {
@@ -86,10 +83,8 @@ impl Compiler {
             }
         };
 
-        // Compile
         let result = typst::compile(&world);
 
-        // Handle warnings
         for warning in &result.warnings {
             diagnostics.add(Diagnostic::warning(format!("{:?}", warning)));
         }

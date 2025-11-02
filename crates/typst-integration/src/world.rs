@@ -33,11 +33,9 @@ pub struct SystemWorld {
 }
 
 impl SystemWorld {
-    /// Create a new system world
     pub fn new(root: PathBuf, main: PathBuf) -> Result<Self> {
         let library = LazyHash::new(Library::default());
 
-        // Create font book and load system fonts
         let book = FontBook::new();
         let fonts = Vec::new();
 

@@ -39,8 +39,7 @@ impl PreviewRenderer {
             return Err(PreviewError::DocumentNotLoaded);
         }
 
-        // TODO: Implement actual rendering using pdfium or SVG
-        // For now, return empty data
+        // TODO: Implement actual rendering using pdfium
         Ok(Vec::new())
     }
 
