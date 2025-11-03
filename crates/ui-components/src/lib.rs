@@ -11,6 +11,7 @@ pub mod editor_view;
 pub mod preview_pane;
 pub mod sidebar;
 pub mod panels;
+pub mod panels_layout;
 
 // Phase 3 modules
 pub mod rendering; // Phase 3.2: Text Rendering Pipeline

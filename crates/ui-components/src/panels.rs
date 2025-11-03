@@ -1,5 +1,7 @@
 //! Panel components
 
+use gpui::{ Render, Window, Context, IntoElement, div, rgb, Styled };
+
 /// Panel type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PanelType {
@@ -46,5 +48,11 @@ impl Panel {
 
     pub fn height(&self) -> f32 {
         self.height
+    }
+}
+
+impl Render for Panel {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        div().flex_1().flex().overflow_hidden().bg(rgb(0x1e1e1e))
     }
 }

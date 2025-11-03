@@ -24,6 +24,7 @@ typst-syntax = { version = "0.13.1", optional = true }
 palette = { version = "0.7", default-features = false, features = ["std"] }
 bitflags = "2.6"
 once_cell = "1.19"
+itertools = "0.14.0"
 
 [features]
 default = ["font-shaping", "syntax"]
