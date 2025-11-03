@@ -1,4 +1,4 @@
-//! Core editing functionality for the Typst editor
+//! Core editing functionality for Typst Studio
 //!
 //! This crate provides the fundamental data structures and operations
 //! for text editing, including the text buffer, selections, and edit operations.

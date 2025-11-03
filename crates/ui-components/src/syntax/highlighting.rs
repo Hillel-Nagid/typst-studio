@@ -4,6 +4,7 @@
 
 use typst_syntax::{ parse, SyntaxNode, SyntaxKind };
 use std::sync::Arc;
+use gpui::rgb;
 
 /// Syntax highlighter using Typst's parser
 pub struct SyntaxHighlighter {
@@ -18,7 +19,7 @@ impl SyntaxHighlighter {
     /// Parse and highlight Typst text
     pub fn highlight(&self, text: &str) -> Arc<HighlightResult> {
         let root = parse(text);
-        let tokens = Self::extract_tokens(&root);
+        let tokens = Self::extract_tokens(&root, text);
 
         Arc::new(HighlightResult {
             root,
@@ -28,27 +29,60 @@ impl SyntaxHighlighter {
 
     /// Extract tokens from the syntax tree for highlighting
     /// Uses iterative approach to avoid stack overflow on deep trees
-    fn extract_tokens(node: &SyntaxNode) -> Vec<HighlightToken> {
+    fn extract_tokens(node: &SyntaxNode, text: &str) -> Vec<HighlightToken> {
         let mut tokens = Vec::new();
-        let mut stack = vec![node];
 
-        while let Some(current) = stack.pop() {
-            let token_type = Self::syntax_kind_to_token_type(current.kind());
+        // Use iterative traversal with position tracking
+        // Stack holds: (node, current_offset)
+        let mut stack: Vec<(SyntaxNode, usize)> = vec![(node.clone(), 0)];
 
-            if let Some(token_type) = token_type {
-                tokens.push(HighlightToken {
-                    start: 0, // TODO: Calculate actual byte offset in Phase 3 implementation
-                    end: 0, // TODO: Calculate actual byte offset in Phase 3 implementation
-                    token_type,
-                });
-            }
+        while let Some((current, current_offset)) = stack.pop() {
+            let kind = current.kind();
+            let node_text = current.text();
+            let node_len = node_text.len();
 
-            // Push children in reverse order to process in correct order
-            for child in current.children().rev() {
-                stack.push(child);
+            // Check if this is a leaf node (no children)
+            let children: Vec<_> = current.children().collect();
+
+            if children.is_empty() && node_len > 0 {
+                // Leaf node - extract token
+                if let Some(token_type) = Self::syntax_kind_to_token_type(kind) {
+                    let start = current_offset;
+                    let end = start + node_len;
+
+                    // Only add tokens for valid byte ranges
+                    if start < text.len() && end <= text.len() && start < end {
+                        let color = Self::token_type_to_color(token_type);
+                        tokens.push(HighlightToken {
+                            start,
+                            end,
+                            token_type,
+                            color,
+                        });
+                    }
+                }
+            } else {
+                // Non-leaf: push children in reverse order (so they're popped in correct order)
+                // Calculate offset for each child
+                let mut child_offset = current_offset;
+                let children_with_offsets: Vec<_> = children
+                    .into_iter()
+                    .map(|child| {
+                        let offset = child_offset;
+                        child_offset += child.text().len();
+                        (child, offset)
+                    })
+                    .collect();
+
+                // Push in reverse order for correct traversal
+                for (child, offset) in children_with_offsets.into_iter().rev() {
+                    stack.push((child.clone(), offset));
+                }
             }
         }
 
+        // Sort tokens by start position
+        tokens.sort_by_key(|t| t.start);
         tokens
     }
 
@@ -114,6 +148,24 @@ impl SyntaxHighlighter {
             _ => None,
         }
     }
+
+    /// Map TokenType to RGB color
+    fn token_type_to_color(token_type: TokenType) -> gpui::Rgba {
+        match token_type {
+            TokenType::Keyword => rgb(0x569cd6), // Blue
+            TokenType::Function => rgb(0xdcdcaa), // Yellow
+            TokenType::Variable => rgb(0x9cdcfe), // Light blue
+            TokenType::Constant => rgb(0xb5cea8), // Green
+            TokenType::String => rgb(0xce9178), // Orange
+            TokenType::Comment => rgb(0x6a9955), // Green (muted)
+            TokenType::Type => rgb(0x4ec9b0), // Teal
+            TokenType::Operator => rgb(0xd4d4d4), // Gray
+            TokenType::Markup => rgb(0xd7ba7d), // Tan
+            TokenType::Math => rgb(0xf8f8f2), // White
+            TokenType::Label => rgb(0xc586c0), // Purple
+            TokenType::Reference => rgb(0xf8f8f2), // White
+        }
+    }
 }
 
 impl Default for SyntaxHighlighter {
@@ -129,10 +181,12 @@ pub struct HighlightResult {
 }
 
 /// A highlighted token
+#[derive(Clone)]
 pub struct HighlightToken {
     pub start: usize,
     pub end: usize,
     pub token_type: TokenType,
+    pub color: gpui::Rgba,
 }
 
 /// Token types for syntax highlighting

@@ -3,7 +3,7 @@
 //! Phase 3.1: Editor View Component Hierarchy
 
 use gpui::*;
-use editor_core::BufferId;
+use editor_core::{ BufferId, Position, SelectionSet, Selection };
 
 pub mod gutter;
 pub mod text_content;
@@ -47,6 +47,10 @@ pub struct EditorView {
     pub status_bar: StatusBar,
     /// View state
     pub scroll_offset: f32,
+    /// Current cursor position
+    pub cursor_position: Position,
+    /// Current selection set
+    pub selection: SelectionSet,
 }
 
 impl EditorView {
@@ -59,6 +63,8 @@ impl EditorView {
             scrollbar: ScrollBar::new(),
             status_bar: StatusBar::new(),
             scroll_offset: 0.0,
+            cursor_position: Position::zero(),
+            selection: SelectionSet::new(Selection::collapsed(Position::zero())),
         }
     }
 
@@ -68,6 +74,54 @@ impl EditorView {
 
     pub fn buffer_id(&self) -> Option<BufferId> {
         self.buffer_id
+    }
+
+    /// Set cursor position
+    pub fn set_cursor_position(&mut self, position: Position) {
+        self.cursor_position = position;
+        self.cursor_renderer.on_cursor_moved();
+    }
+
+    /// Move cursor by offset
+    pub fn move_cursor(&mut self, line_delta: isize, column_delta: isize) {
+        let new_line = ((self.cursor_position.line as isize) + line_delta).max(0) as usize;
+        let new_column = ((self.cursor_position.column as isize) + column_delta).max(0) as usize;
+        self.set_cursor_position(Position::new(new_line, new_column));
+    }
+
+    /// Update selection set
+    pub fn set_selection(&mut self, selection: SelectionSet) {
+        self.selection = selection;
+    }
+
+    /// Get current cursor position
+    pub fn get_cursor_position(&self) -> Position {
+        self.cursor_position
+    }
+
+    /// Get current selection
+    pub fn get_selection(&self) -> &SelectionSet {
+        &self.selection
+    }
+
+    /// Get mutable selection
+    pub fn get_selection_mut(&mut self) -> &mut SelectionSet {
+        &mut self.selection
+    }
+
+    /// Map mouse coordinates to buffer position
+    /// gutter_width: width of line number gutter in pixels
+    /// content_x, content_y: mouse coordinates relative to text area start
+    /// line_height and char_width: from text_content metrics
+    pub fn point_to_position(
+        content_x: f32,
+        content_y: f32,
+        char_width: f32,
+        line_height: f32
+    ) -> Position {
+        let line = (content_y / line_height).floor() as usize;
+        let column = (content_x / char_width).floor() as usize;
+        Position::new(line, column)
     }
 }
 
@@ -163,7 +217,13 @@ impl Render for EditorView {
                     .px(px(12.0))
                     .child(
                         div()
-                            .child("Line 1, Col 1 | Typst | UTF-8 | LF | RTL/LTR: Enabled")
+                            .child(
+                                format!(
+                                    "Line {}, Col {} | Typst | UTF-8 | LF | RTL/LTR: Enabled",
+                                    self.cursor_position.line + 1,
+                                    self.cursor_position.column + 1
+                                )
+                            )
                             .text_color(rgb(0xffffff))
                             .text_size(px(12.0))
                     )
@@ -179,5 +239,13 @@ mod tests {
     fn test_editor_view_creation() {
         let view = EditorView::new();
         assert!(view.buffer_id.is_none());
+        assert_eq!(view.cursor_position, Position::zero());
+    }
+
+    #[test]
+    fn test_cursor_position_update() {
+        let mut view = EditorView::new();
+        view.set_cursor_position(Position::new(5, 10));
+        assert_eq!(view.get_cursor_position(), Position::new(5, 10));
     }
 }

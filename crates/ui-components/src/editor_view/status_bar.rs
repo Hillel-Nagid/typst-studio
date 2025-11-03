@@ -1,40 +1,135 @@
-//! Status bar component showing editor information
+//! Status bar component at the bottom of the editor
 //!
 //! Phase 3.1: Editor View Component Hierarchy
 
-use gpui::*;
-use editor_core::Position;
+use editor_core::selection::Position;
 
-/// Status bar at bottom of editor
+/// Status bar at the bottom of the editor
 pub struct StatusBar {
-    /// Position indicator
-    pub position: PositionIndicator,
-    /// Selection info
-    pub selection: SelectionInfo,
-    /// Encoding display
-    pub encoding: EncodingDisplay,
+    /// Current cursor position
+    pub cursor_position: Position,
+    /// File name
+    pub file_name: String,
+    /// File encoding (default UTF-8)
+    pub encoding: String,
+    /// Line ending type
+    pub line_ending: LineEndingDisplay,
     /// Language mode
-    pub language: LanguageMode,
+    pub language: String,
+    /// Diagnostic message
+    pub diagnostic: Option<String>,
+    /// Dirty flag (unsaved changes)
+    pub dirty: bool,
+}
+
+/// Line ending display variant
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LineEndingDisplay {
+    /// Unix line ending (LF)
+    Lf,
+    /// Windows line ending (CRLF)
+    Crlf,
+    /// Classic Mac line ending (CR)
+    Cr,
+}
+
+impl LineEndingDisplay {
+    pub fn as_str(&self) -> &str {
+        match self {
+            LineEndingDisplay::Lf => "LF",
+            LineEndingDisplay::Crlf => "CRLF",
+            LineEndingDisplay::Cr => "CR",
+        }
+    }
+}
+
+impl Default for LineEndingDisplay {
+    fn default() -> Self {
+        #[cfg(windows)]
+        return LineEndingDisplay::Crlf;
+        #[cfg(not(windows))]
+        return LineEndingDisplay::Lf;
+    }
 }
 
 impl StatusBar {
     pub fn new() -> Self {
         Self {
-            position: PositionIndicator::default(),
-            selection: SelectionInfo::default(),
-            encoding: EncodingDisplay::default(),
-            language: LanguageMode::default(),
+            cursor_position: Position::zero(),
+            file_name: "Untitled".to_string(),
+            encoding: "UTF-8".to_string(),
+            line_ending: LineEndingDisplay::default(),
+            language: "Typst".to_string(),
+            diagnostic: None,
+            dirty: false,
         }
     }
 
-    /// Update all components
-    pub fn update(&mut self, _position: &Position, _selection_size: usize) {
-        todo!("Update status bar components")
+    /// Set cursor position
+    pub fn set_cursor_position(&mut self, position: Position) {
+        self.cursor_position = position;
     }
 
-    /// Render status bar
-    pub fn render(&self) {
-        todo!("Render status bar")
+    /// Set file name
+    pub fn set_file_name(&mut self, name: String) {
+        self.file_name = name;
+    }
+
+    /// Set encoding
+    pub fn set_encoding(&mut self, encoding: String) {
+        self.encoding = encoding;
+    }
+
+    /// Set line ending type
+    pub fn set_line_ending(&mut self, ending: LineEndingDisplay) {
+        self.line_ending = ending;
+    }
+
+    /// Set language mode
+    pub fn set_language(&mut self, language: String) {
+        self.language = language;
+    }
+
+    /// Set diagnostic message
+    pub fn set_diagnostic(&mut self, message: Option<String>) {
+        self.diagnostic = message;
+    }
+
+    /// Set dirty flag
+    pub fn set_dirty(&mut self, dirty: bool) {
+        self.dirty = dirty;
+    }
+
+    /// Get status bar text
+    pub fn get_status_text(&self) -> String {
+        let mut parts = vec![];
+
+        // Cursor position
+        let pos_display = format!(
+            "Line {}, Column {}",
+            self.cursor_position.line + 1,
+            self.cursor_position.column + 1
+        );
+        parts.push(pos_display);
+
+        // Encoding
+        parts.push(self.encoding.clone());
+
+        parts.join(" | ")
+    }
+
+    /// Get diagnostic text if any
+    pub fn get_diagnostic_text(&self) -> Option<&str> {
+        self.diagnostic.as_deref()
+    }
+
+    /// Get error status indicator for display (checkmark or error count)
+    pub fn get_error_status(&self) -> String {
+        if let Some(diag) = &self.diagnostic {
+            format!("✕ {}", diag)
+        } else {
+            "No errors ✓".to_string()
+        }
     }
 }
 
@@ -44,148 +139,43 @@ impl Default for StatusBar {
     }
 }
 
-/// Position indicator (line:column)
-#[derive(Debug, Clone)]
-pub struct PositionIndicator {
-    /// Current line (1-indexed for display)
-    pub line: usize,
-    /// Current column (1-indexed for display)
-    pub column: usize,
-}
-
-impl PositionIndicator {
-    pub fn new() -> Self {
-        Self { line: 1, column: 1 }
-    }
-
-    /// Update position
-    pub fn update(&mut self, position: &Position) {
-        self.line = position.line + 1; // Convert to 1-indexed
-        self.column = position.column + 1;
-    }
-
-    /// Format as string (e.g., "Ln 5, Col 12")
-    pub fn format(&self) -> String {
-        format!("Ln {}, Col {}", self.line, self.column)
-    }
-}
-
-impl Default for PositionIndicator {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Selection info (characters selected)
-#[derive(Debug, Clone)]
-pub struct SelectionInfo {
-    /// Number of characters selected
-    pub char_count: usize,
-    /// Number of lines selected
-    pub line_count: usize,
-}
-
-impl SelectionInfo {
-    pub fn new() -> Self {
-        Self {
-            char_count: 0,
-            line_count: 0,
-        }
-    }
-
-    /// Update selection info
-    pub fn update(&mut self, char_count: usize, line_count: usize) {
-        self.char_count = char_count;
-        self.line_count = line_count;
-    }
-
-    /// Format as string (e.g., "5 chars selected")
-    pub fn format(&self) -> Option<String> {
-        if self.char_count > 0 {
-            if self.line_count > 1 {
-                Some(format!("{} chars ({} lines)", self.char_count, self.line_count))
-            } else {
-                Some(format!("{} chars", self.char_count))
-            }
-        } else {
-            None
-        }
-    }
-
-    /// Clear selection info
-    pub fn clear(&mut self) {
-        self.char_count = 0;
-        self.line_count = 0;
-    }
-}
-
-impl Default for SelectionInfo {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Encoding display
-#[derive(Debug, Clone)]
-pub struct EncodingDisplay {
-    /// Current encoding (e.g., "UTF-8")
-    pub encoding: String,
-}
-
-impl EncodingDisplay {
-    pub fn new() -> Self {
-        Self {
-            encoding: "UTF-8".to_string(),
-        }
-    }
-
-    /// Set encoding
-    pub fn set_encoding(&mut self, encoding: String) {
-        self.encoding = encoding;
-    }
-
-    /// Format as string
-    pub fn format(&self) -> String {
-        self.encoding.clone()
-    }
-}
-
-impl Default for EncodingDisplay {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Language mode indicator
-#[derive(Debug, Clone)]
-pub struct LanguageMode {
-    /// Current language (e.g., "Typst")
-    pub language: String,
-}
-
-impl LanguageMode {
-    pub fn new() -> Self {
-        Self {
-            language: "Plain Text".to_string(),
-        }
-    }
-
-    /// Set language
-    pub fn set_language(&mut self, language: String) {
-        self.language = language;
-    }
-
-    /// Format as string
-    pub fn format(&self) -> String {
-        self.language.clone()
-    }
-}
-
-impl Default for LanguageMode {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_status_bar_creation() {
+        let sb = StatusBar::new();
+        assert_eq!(sb.file_name, "Untitled");
+        assert_eq!(sb.language, "Typst");
+        assert!(!sb.dirty);
+    }
+
+    #[test]
+    fn test_status_bar_text() {
+        let mut sb = StatusBar::new();
+        sb.set_cursor_position(Position::new(5, 10));
+        sb.set_file_name("main.typ".to_string());
+
+        let text = sb.get_status_text();
+        assert!(text.contains("Line 6, Column 11"));
+        assert!(text.contains("main.typ"));
+    }
+
+    #[test]
+    fn test_status_bar_dirty() {
+        let mut sb = StatusBar::new();
+        sb.set_file_name("test.typ".to_string());
+        sb.set_dirty(true);
+
+        let text = sb.get_status_text();
+        assert!(text.contains("●"));
+    }
+
+    #[test]
+    fn test_line_ending_display() {
+        assert_eq!(LineEndingDisplay::Lf.as_str(), "LF");
+        assert_eq!(LineEndingDisplay::Crlf.as_str(), "CRLF");
+        assert_eq!(LineEndingDisplay::Cr.as_str(), "CR");
+    }
+}

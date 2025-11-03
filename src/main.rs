@@ -1,32 +1,39 @@
-//! Typst Editor - Main Application Entry Point
+//! Typst Studio - Main Application Entry Point
+
+#![recursion_limit = "512"]
 
 mod state;
 mod app;
 
-use tracing_subscriber;
+use gpui::{
+    App,
+    AppContext,
+    Application,
+    Bounds,
+    WindowBounds,
+    WindowOptions,
+    px,
+    size,
+};
+use app::TypstEditorWindow;
 
 fn main() {
     // Initialize logging
     tracing_subscriber::fmt().with_max_level(tracing::Level::INFO).with_target(false).init();
 
-    tracing::info!("Starting Typst Editor");
+    tracing::info!("Starting Typst Studio");
 
-    // For now, just run a simple version
-    // In a real GPUI app, we would initialize GPUI and create the app
-    println!("Typst Editor v0.1.0");
-    println!("Phase 1 Implementation Complete!");
-    println!("- Workspace structure created");
-    println!("- Core data models implemented");
-    println!("- Text buffer with rope structure ready");
-    println!("- Bidirectional text support implemented");
-    println!("- Typst compiler integration prepared");
-    println!("- Preview system ready");
-    println!("- LSP client foundation complete");
-    println!("- UI components structure established");
+    // Create and run GPUI application
+    Application::new().run(|cx: &mut App| {
+        let bounds = Bounds::centered(None, size(px(1400.0), px(900.0)), cx);
+        cx.open_window(
+            WindowOptions {
+                window_bounds: Some(WindowBounds::Windowed(bounds)),
+                ..Default::default()
+            },
+            |_, cx| { cx.new(|cx| TypstEditorWindow::new(cx)) }
+        ).unwrap();
 
-    // TODO: Initialize GPUI application
-    // let app = gpui::App::new();
-    // app.run(|cx| {
-    //     TypstEditor::new(cx)
-    // });
+        tracing::info!("Editor window opened");
+    });
 }

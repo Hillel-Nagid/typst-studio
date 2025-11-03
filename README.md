@@ -1,4 +1,4 @@
-# Typst Editor
+# Typst Studio
 
 A high-performance native cross-platform text editor for Typst documents with bidirectional text support, live preview capabilities, and full LSP integration.
 
@@ -20,7 +20,7 @@ A high-performance native cross-platform text editor for Typst documents with bi
 ## Project Structure
 
 ```
-typst-editor/
+typst-studio/
 ├── crates/
 │   ├── editor-core/          # Core editing logic
 │   │   ├── buffer/           # Text buffer implementation
@@ -59,8 +59,8 @@ typst-editor/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/typst-editor
-cd typst-editor
+git clone https://github.com/yourusername/typst-studio
+cd typst-studio
 
 # Build
 cargo build --release

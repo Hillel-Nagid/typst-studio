@@ -2,7 +2,6 @@
 //!
 //! Phase 3.1: Editor View Component Hierarchy
 
-use gpui::*;
 use editor_core::Position;
 
 /// Overlay manager for popups and tooltips

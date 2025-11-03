@@ -5,5 +5,12 @@
 pub mod input_handler;
 pub mod key_bindings;
 
-pub use input_handler::{ InputHandler, ImeState, ClickType, HoverState };
+pub use input_handler::{
+    InputHandler,
+    ImeState,
+    ClickType,
+    HoverState,
+    ClickClassification,
+    DragState,
+};
 pub use key_bindings::{ KeyBindings, KeyBinding, Action, Modifiers };

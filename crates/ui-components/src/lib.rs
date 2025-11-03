@@ -1,9 +1,10 @@
-//! UI components for the Typst editor
+//! UI components for Typst Studio
 //!
-//! This crate contains all the UI components for the Typst editor,
+//! This crate contains all the UI components for Typst Studio,
 //! organized by functionality as defined in the project plan.
 
 #![allow(dead_code)]
+#![recursion_limit = "512"]
 
 // Main component modules
 pub mod editor_view;

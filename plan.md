@@ -557,6 +557,7 @@ EditorView
 - **Help**: Documentation, Keyboard Shortcuts, About
 
 **Implementation Status:**
+
 - ✓ Phase 1: Menu structure and basic UI rendering
 - → Phase 2: Wire up file operations (open, save, close)
 - → Phase 3: Integrate edit operations and compile features
@@ -625,6 +626,7 @@ The editor now fully implements the UAX #9 standard through the `bidi-text` crat
 **Architecture:**
 
 1. **TextShaper Enhancement** (`crates/ui-components/src/rendering/text_shaping.rs`):
+
    - New `shape_with_bidi()` method processes text through Unicode Bidi Algorithm
    - Returns `BidiShapedText` containing multiple shaped runs with direction info
    - Each run (`BidiShapedRun`) preserves:
@@ -634,6 +636,7 @@ The editor now fully implements the UAX #9 standard through the `bidi-text` crat
      - Shaped glyphs
 
 2. **LineLayout Enhancement** (`crates/ui-components/src/rendering/line_layout.rs`):
+
    - New `compute_visual_lines_with_bidi()` method accepts `BidiShapedText`
    - Calculates x_offset for each run in visual order
    - LTR base: runs flow left-to-right from position 0
@@ -641,6 +644,7 @@ The editor now fully implements the UAX #9 standard through the `bidi-text` crat
    - Produces `VisualLine` with multiple `VisualTextRun` entries
 
 3. **LineRenderer Integration** (`crates/ui-components/src/editor_view/line_renderer.rs`):
+
    - Uses `TextShaper.shape_with_bidi()` for each line
    - Caches bidi-shaped results for performance
    - Processes lines through full bidi+shaping pipeline
@@ -678,6 +682,7 @@ Screen
 **Test Results:**
 
 All bidi-text crate tests pass:
+
 - ✅ LTR text rendering (English)
 - ✅ RTL text rendering (Hebrew: שלום)
 - ✅ Mixed text handling (Hello שלום World - multiple runs)
@@ -779,6 +784,7 @@ VisualTextRun {
 Color Palette:
 
 - **UI Colors**:
+
   - Window background: #2d2d30
   - Editor background: #1e1e1e
   - Gutter background: #252526
@@ -788,6 +794,7 @@ Color Palette:
   - Selection: #264f78
 
 - **Syntax Colors**:
+
   - Keywords (#import, #let, #set, #show): #569cd6 (blue)
   - Functions (user-defined/built-in): #c586c0 (purple)
   - Strings and interpolations: #ce9178 (orange)
@@ -807,6 +814,7 @@ Color Palette:
   - Button hover: #3e3e42
 
 **Implementation Status**:
+
 - ✓ Phase 1: Typst Studio Dark theme created and set as default
 - → Phase 2: Light theme variant
 - → Phase 3: Theme switching UI

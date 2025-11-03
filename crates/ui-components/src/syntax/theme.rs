@@ -106,11 +106,159 @@ impl Theme {
             },
         }
     }
+
+    /// Typst Studio Dark theme matching the mockup design
+    pub fn typst_studio_dark() -> Self {
+        Self {
+            name: "Typst Studio Dark".to_string(),
+            variant: ThemeVariant::Dark,
+            colors: ColorScheme {
+                // #1e1e1e = 0x1e/0xff = 0.118..., use 30/255 ≈ 0.118
+                background: Srgb::new(
+                    (0x1e as f32) / 255.0,
+                    (0x1e as f32) / 255.0,
+                    (0x1e as f32) / 255.0
+                ),
+                foreground: Srgb::new(
+                    (0xcc as f32) / 255.0,
+                    (0xcc as f32) / 255.0,
+                    (0xcc as f32) / 255.0
+                ),
+                border: Srgb::new(
+                    (0x3e as f32) / 255.0,
+                    (0x3e as f32) / 255.0,
+                    (0x42 as f32) / 255.0
+                ),
+                selection: Srgb::new(
+                    (0x26 as f32) / 255.0,
+                    (0x4f as f32) / 255.0,
+                    (0x78 as f32) / 255.0
+                ),
+                cursor: Srgb::new(
+                    (0xcc as f32) / 255.0,
+                    (0xcc as f32) / 255.0,
+                    (0xcc as f32) / 255.0
+                ),
+                current_line: Srgb::new(
+                    (0x25 as f32) / 255.0,
+                    (0x25 as f32) / 255.0,
+                    (0x26 as f32) / 255.0
+                ),
+                // Keywords: #569cd6 (blue)
+                keyword: Srgb::new(
+                    (0x56 as f32) / 255.0,
+                    (0x9c as f32) / 255.0,
+                    (0xd6 as f32) / 255.0
+                ),
+                // Functions: #c586c0 (purple)
+                function: Srgb::new(
+                    (0xc5 as f32) / 255.0,
+                    (0x86 as f32) / 255.0,
+                    (0xc0 as f32) / 255.0
+                ),
+                variable: Srgb::new(
+                    (0xcc as f32) / 255.0,
+                    (0xcc as f32) / 255.0,
+                    (0xcc as f32) / 255.0
+                ),
+                // Constants/Numbers: #b5cea8 (light green)
+                constant: Srgb::new(
+                    (0xb5 as f32) / 255.0,
+                    (0xce as f32) / 255.0,
+                    (0xa8 as f32) / 255.0
+                ),
+                // Strings: #ce9178 (orange)
+                string: Srgb::new(
+                    (0xce as f32) / 255.0,
+                    (0x91 as f32) / 255.0,
+                    (0x78 as f32) / 255.0
+                ),
+                // Comments: #6a9955 (green)
+                comment: Srgb::new(
+                    (0x6a as f32) / 255.0,
+                    (0x99 as f32) / 255.0,
+                    (0x55 as f32) / 255.0
+                ),
+                type_name: Srgb::new(
+                    (0x4e as f32) / 255.0,
+                    (0xc9 as f32) / 255.0,
+                    (0xb0 as f32) / 255.0
+                ),
+                operator: Srgb::new(
+                    (0xcc as f32) / 255.0,
+                    (0xcc as f32) / 255.0,
+                    (0xcc as f32) / 255.0
+                ),
+                error: Srgb::new(
+                    (0xf4 as f32) / 255.0,
+                    (0x44 as f32) / 255.0,
+                    (0x44 as f32) / 255.0
+                ),
+                warning: Srgb::new(
+                    (0xff as f32) / 255.0,
+                    (0x99 as f32) / 255.0,
+                    (0x33 as f32) / 255.0
+                ),
+                info: Srgb::new(
+                    (0x33 as f32) / 255.0,
+                    (0x99 as f32) / 255.0,
+                    (0xff as f32) / 255.0
+                ),
+                hint: Srgb::new(
+                    (0x99 as f32) / 255.0,
+                    (0x99 as f32) / 255.0,
+                    (0x99 as f32) / 255.0
+                ),
+                button_background: Srgb::new(
+                    (0x2d as f32) / 255.0,
+                    (0x2d as f32) / 255.0,
+                    (0x30 as f32) / 255.0
+                ),
+                button_hover: Srgb::new(
+                    (0x3e as f32) / 255.0,
+                    (0x3e as f32) / 255.0,
+                    (0x42 as f32) / 255.0
+                ),
+                input_background: Srgb::new(
+                    (0x1e as f32) / 255.0,
+                    (0x1e as f32) / 255.0,
+                    (0x1e as f32) / 255.0
+                ),
+                panel_background: Srgb::new(
+                    (0x25 as f32) / 255.0,
+                    (0x25 as f32) / 255.0,
+                    (0x26 as f32) / 255.0
+                ),
+                sidebar_background: Srgb::new(
+                    (0x2d as f32) / 255.0,
+                    (0x2d as f32) / 255.0,
+                    (0x30 as f32) / 255.0
+                ),
+                statusbar_background: Srgb::new(
+                    (0x00 as f32) / 255.0,
+                    (0x7a as f32) / 255.0,
+                    (0xcc as f32) / 255.0
+                ),
+            },
+            typography: Typography {
+                editor_font: "Consolas".to_string(),
+                editor_size: 13.0,
+                ui_font: "Segoe UI".to_string(),
+                ui_size: 12.0,
+                line_height: 1.6,
+            },
+            spacing: Spacing {
+                gutter_width: 50.0,
+                line_padding: 2.0,
+                panel_padding: 8.0,
+            },
+        }
+    }
 }
 
 impl Default for Theme {
     fn default() -> Self {
-        Self::default_light()
+        Self::typst_studio_dark()
     }
 }
 

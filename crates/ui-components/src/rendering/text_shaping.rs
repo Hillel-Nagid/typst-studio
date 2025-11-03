@@ -7,6 +7,11 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use bidi_text::{ BidiParagraph, Direction };
 
+#[cfg(feature = "font-shaping")]
+use rustybuzz;
+#[cfg(feature = "font-shaping")]
+use ttf_parser;
+
 /// Text shaping service for complex script support
 pub struct TextShaper {
     /// Cache for shaped text runs
@@ -29,9 +34,16 @@ impl TextShaper {
             return cached.clone();
         }
 
-        // TODO: Implement proper rustybuzz integration
-        // For now, create a simple stub that returns basic glyphs
-        // This will be replaced with actual shaping once the API is confirmed
+        #[cfg(feature = "font-shaping")]
+        {
+            // Try to shape with rustybuzz if font data is available
+            if let Some(shaped) = self.shape_with_rustybuzz(text, font_data) {
+                self.cache.insert(cache_key, shaped.clone());
+                return shaped;
+            }
+        }
+
+        // Fallback: create simple glyphs
         let glyphs: Vec<ShapedGlyph> = text
             .chars()
             .enumerate()
@@ -50,6 +62,44 @@ impl TextShaper {
         // Cache the result
         self.cache.insert(cache_key, shaped.clone());
         shaped
+    }
+
+    #[cfg(feature = "font-shaping")]
+    fn shape_with_rustybuzz(&self, text: &str, font_data: &Arc<FontData>) -> Option<ShapedText> {
+        // Parse font from font_data bytes
+        if font_data.bytes.is_empty() {
+            return None;
+        }
+
+        let face = ttf_parser::Face::parse(&font_data.bytes, 0).ok()?;
+        let rb_face = rustybuzz::Face::from_face(face);
+
+        // Create a unicode buffer
+        let mut buffer = rustybuzz::UnicodeBuffer::new();
+        buffer.push_str(text);
+
+        // Detect script and direction automatically
+        buffer.guess_segment_properties();
+
+        // Shape the text with HarfBuzz
+        let glyph_buffer = rustybuzz::shape(&rb_face, &[], buffer);
+
+        // Convert to our ShapedGlyph format
+        let glyphs: Vec<ShapedGlyph> = glyph_buffer
+            .glyph_infos()
+            .iter()
+            .zip(glyph_buffer.glyph_positions())
+            .map(|(info, pos)| ShapedGlyph {
+                glyph_id: info.glyph_id,
+                cluster: info.cluster,
+                x_offset: pos.x_offset as f32,
+                y_offset: pos.y_offset as f32,
+                x_advance: pos.x_advance as f32,
+                y_advance: pos.y_advance as f32,
+            })
+            .collect();
+
+        Some(ShapedText { glyphs })
     }
 
     /// Shape text with bidirectional support
