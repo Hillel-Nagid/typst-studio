@@ -540,6 +540,70 @@ EditorView
 - **Overflow handling**: Scrolling regions with proper clipping
 - **Z-ordering**: Overlays above content, cursors above text, etc.
 
+### 3.1.1 Menu System (NEW)
+
+**Menu Bar Architecture:**
+
+- Top-level menu items: File, Edit, View, Compile, Help
+- Dropdown menus with keyboard shortcuts
+- Platform-specific menu behavior (macOS menubar vs Windows/Linux in-window)
+
+**Menu Actions (Phase 1 Implementation - Placeholder UI):**
+
+- **File**: New, Open, Save, Save As, Close, Exit
+- **Edit**: Undo, Redo, Cut, Copy, Paste, Find, Replace
+- **View**: Toggle Sidebar, Toggle Preview, Zoom In/Out, Toggle Theme
+- **Compile**: Compile Document, Export PDF, Export PNG
+- **Help**: Documentation, Keyboard Shortcuts, About
+
+**Implementation Status:**
+- ✓ Phase 1: Menu structure and basic UI rendering
+- → Phase 2: Wire up file operations (open, save, close)
+- → Phase 3: Integrate edit operations and compile features
+
+### 3.1.2 Top Navigation Bar (NEW)
+
+**TopNav Components:**
+
+- Logo/branding section: "T" icon (blue) + "Typst Studio" text
+- Integrated MenuBar with File, Edit, View, Compile, Help
+- Right-side toolbar:
+  - Search icon (placeholder)
+  - Save icon (placeholder)
+  - Hamburger menu icon (placeholder)
+  - Close button (closes window)
+
+**Visual Styling:**
+
+- Background: #2d2d30 (dark gray)
+- Height: 36px
+- Text color: #cccccc (light gray)
+- Hover state: #3e3e42 (slightly lighter)
+- Close button: Blue (#007acc) background with white icon
+
+### 3.1.3 Split-Pane Layout (NEW)
+
+**Default Layout Configuration:**
+
+- Vertical split: Editor pane (left) | Preview pane (right)
+- Default ratio: 50/50
+- Adjustable splitter with drag handle (1px divider)
+- Minimum pane width: 300px
+- Panel labels: "EDITOR" and "PREVIEW" at top of each pane
+
+**Pane Headers:**
+
+- Height: 32px
+- Background: #2d2d30
+- Text: "EDITOR" or "PREVIEW" (bold, 12px)
+- Additional info in preview pane (right-aligned)
+
+**Layout Persistence:**
+
+- Remember split ratio per workspace (future enhancement)
+- Remember which panes are visible (future enhancement)
+- Restore layout on application restart (future enhancement)
+
 ### 3.2 Text Rendering Pipeline
 
 **Rendering Stages:**
@@ -551,6 +615,74 @@ EditorView
    - Script-specific shaping (Arabic joining, Devanagari combining marks)
    - Emoji rendering (color emoji support)
    - Cache shaped runs for identical text
+
+#### 3.2.1 Bidirectional Text Processing (Implementation Complete)
+
+**Unicode Bidirectional Algorithm Integration (UAX #9):**
+
+The editor now fully implements the UAX #9 standard through the `bidi-text` crate, enabling proper mixed RTL/LTR text rendering on the same line.
+
+**Architecture:**
+
+1. **TextShaper Enhancement** (`crates/ui-components/src/rendering/text_shaping.rs`):
+   - New `shape_with_bidi()` method processes text through Unicode Bidi Algorithm
+   - Returns `BidiShapedText` containing multiple shaped runs with direction info
+   - Each run (`BidiShapedRun`) preserves:
+     - Logical range in original text
+     - Direction (LTR/RTL)
+     - Embedding level (for nested bidi)
+     - Shaped glyphs
+
+2. **LineLayout Enhancement** (`crates/ui-components/src/rendering/line_layout.rs`):
+   - New `compute_visual_lines_with_bidi()` method accepts `BidiShapedText`
+   - Calculates x_offset for each run in visual order
+   - LTR base: runs flow left-to-right from position 0
+   - RTL base: runs flow right-to-left from right edge
+   - Produces `VisualLine` with multiple `VisualTextRun` entries
+
+3. **LineRenderer Integration** (`crates/ui-components/src/editor_view/line_renderer.rs`):
+   - Uses `TextShaper.shape_with_bidi()` for each line
+   - Caches bidi-shaped results for performance
+   - Processes lines through full bidi+shaping pipeline
+
+4. **EditorView Integration** (`crates/ui-components/src/editor_view/mod.rs`):
+   - Updated rendering pipeline to support mixed RTL/LTR
+   - Sample text demonstrates bidi support: "// Mixed text: English אבג 123 عرب"
+   - Status bar indicates "RTL/LTR: Enabled"
+
+**Data Flow:**
+
+```
+Buffer Line Text
+    ↓
+BidiParagraph (UAX #9 algorithm)
+    ↓ (visual runs with direction)
+TextShaper.shape_with_bidi()
+    ↓ (BidiShapedText with shaped glyphs per run)
+LineLayout.compute_visual_lines_with_bidi()
+    ↓ (VisualLine with positioned runs)
+Renderer
+    ↓
+Screen
+```
+
+**Supported Features:**
+
+- ✅ Mixed RTL/LTR text on same line
+- ✅ Auto-detection of base direction from first strong character
+- ✅ Proper handling of neutral characters (numbers, punctuation)
+- ✅ Numbers flow LTR even in RTL context
+- ✅ Multiple embedding levels (nested bidi)
+- ✅ Efficient caching of shaped runs
+
+**Test Results:**
+
+All bidi-text crate tests pass:
+- ✅ LTR text rendering (English)
+- ✅ RTL text rendering (Hebrew: שלום)
+- ✅ Mixed text handling (Hello שלום World - multiple runs)
+- ✅ Cursor movement across direction boundaries
+- ✅ Visual line layout calculations
 
 2. **Font Management**:
 
@@ -641,6 +773,43 @@ VisualTextRun {
    - Dark and light mode variants
    - User-customizable themes
    - Live theme preview
+
+**Typst Studio Dark Theme (NEW - Phase 1 Implementation):**
+
+Color Palette:
+
+- **UI Colors**:
+  - Window background: #2d2d30
+  - Editor background: #1e1e1e
+  - Gutter background: #252526
+  - Text (normal): #cccccc
+  - Text (dim): #858585
+  - Cursor: #cccccc
+  - Selection: #264f78
+
+- **Syntax Colors**:
+  - Keywords (#import, #let, #set, #show): #569cd6 (blue)
+  - Functions (user-defined/built-in): #c586c0 (purple)
+  - Strings and interpolations: #ce9178 (orange)
+  - Comments (line and block): #6a9955 (green)
+  - Numbers and constants: #b5cea8 (light green)
+  - Operators: #cccccc (normal text)
+  - Type names: #4ec9b0 (teal)
+  - Error: #f44444 (red)
+  - Warning: #ff9933 (orange)
+
+- **UI Element Colors**:
+  - Status bar background: #007acc (blue)
+  - Status bar text: #ffffff (white)
+  - Menu bar background: #2d2d30
+  - Menu hover: #3e3e42
+  - Button background: #2d2d30
+  - Button hover: #3e3e42
+
+**Implementation Status**:
+- ✓ Phase 1: Typst Studio Dark theme created and set as default
+- → Phase 2: Light theme variant
+- → Phase 3: Theme switching UI
 
 **Highlighting Performance:**
 
