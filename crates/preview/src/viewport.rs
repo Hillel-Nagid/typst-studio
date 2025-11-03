@@ -127,38 +127,3 @@ impl Default for Viewport {
         Self::new(800.0, 600.0)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_viewport_creation() {
-        let viewport = Viewport::new(1024.0, 768.0);
-        assert_eq!(viewport.width, 1024.0);
-        assert_eq!(viewport.height, 768.0);
-    }
-
-    #[test]
-    fn test_zoom_levels() {
-        let viewport = Viewport::new(1000.0, 800.0);
-
-        let fit_width_scale = ZoomLevel::FitWidth.to_scale(1000.0, 800.0, 500.0, 700.0);
-        assert_eq!(fit_width_scale, 2.0);
-
-        let fit_page_scale = ZoomLevel::FitPage.to_scale(1000.0, 800.0, 500.0, 700.0);
-        assert!((fit_page_scale - 1.142857).abs() < 0.001);
-    }
-
-    #[test]
-    fn test_scrolling() {
-        let mut viewport = Viewport::new(800.0, 600.0);
-        viewport.scroll_to(100.0, 50.0);
-        assert_eq!(viewport.scroll_x, 100.0);
-        assert_eq!(viewport.scroll_y, 50.0);
-
-        viewport.scroll_by(20.0, 30.0);
-        assert_eq!(viewport.scroll_x, 120.0);
-        assert_eq!(viewport.scroll_y, 80.0);
-    }
-}

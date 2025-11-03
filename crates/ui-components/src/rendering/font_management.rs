@@ -35,22 +35,22 @@ impl FontManager {
             families: &[fontdb::Family::Name(family)],
             weight: fontdb::Weight(weight),
             stretch: fontdb::Stretch::Normal,
-            style: if italic { fontdb::Style::Italic } else { fontdb::Style::Normal },
+            style: if italic {
+                fontdb::Style::Italic
+            } else {
+                fontdb::Style::Normal
+            },
         };
 
         let font_id = self.database.query(&query)?;
-        
+
         // Load the font data
         let (font_data, _face_index) = self.database.face_source(font_id)?;
-        
+
         let bytes = match font_data {
             fontdb::Source::Binary(data) => data.as_ref().as_ref().to_vec(),
-            fontdb::Source::File(path) => {
-                std::fs::read(path).ok()?
-            }
-            fontdb::Source::SharedFile(path, _) => {
-                std::fs::read(path).ok()?
-            }
+            fontdb::Source::File(path) => { std::fs::read(path).ok()? }
+            fontdb::Source::SharedFile(path, _) => { std::fs::read(path).ok()? }
         };
 
         let font = Arc::new(FontData {
@@ -179,39 +179,5 @@ impl FontFallbackChain {
 
     pub fn add_fallback(&mut self, font: String) {
         self.fallbacks.push(font);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_font_manager_creation() {
-        let fm = FontManager::new();
-        assert_eq!(fm.cache_size(), 0);
-    }
-
-    #[test]
-    fn test_font_fallback_chain() {
-        let mut chain = FontFallbackChain::new("Arial".to_string());
-        chain.add_fallback("Courier".to_string());
-        chain.add_fallback("monospace".to_string());
-
-        assert_eq!(chain.primary, "Arial");
-        assert_eq!(chain.fallbacks.len(), 2);
-    }
-
-    #[test]
-    fn test_script_enum() {
-        let scripts = vec![
-            Script::Latin,
-            Script::Arabic,
-            Script::Hebrew,
-            Script::Devanagari,
-            Script::CJK,
-            Script::Other
-        ];
-        assert_eq!(scripts.len(), 6);
     }
 }

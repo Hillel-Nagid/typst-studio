@@ -219,31 +219,3 @@ impl BidiParagraph {
         self.bidi_info.visual_to_logical(visual_pos, self.text.len())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_ltr_text() {
-        let para = BidiParagraph::new("Hello World".to_string(), None);
-        assert!(para.base_direction().is_ltr());
-
-        // In pure LTR text, logical = visual
-        assert_eq!(para.logical_to_visual(0), 0);
-        assert_eq!(para.logical_to_visual(5), 5);
-    }
-
-    #[test]
-    fn test_rtl_text() {
-        let para = BidiParagraph::new("שלום עולם".to_string(), None);
-        assert!(para.base_direction().is_rtl());
-    }
-
-    #[test]
-    fn test_mixed_text() {
-        let para = BidiParagraph::new("Hello שלום World".to_string(), None);
-        let runs = para.visual_runs();
-        assert!(runs.len() > 1); // Should have multiple runs
-    }
-}

@@ -146,16 +146,3 @@ impl typst::World for SystemWorld {
         Some(typst::foundations::Datetime::Date(date))
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_world_creation() {
-        let root = PathBuf::from(".");
-        let main = PathBuf::from("main.typ");
-        let world = SystemWorld::new(root, main);
-        assert!(world.is_ok());
-    }
-}

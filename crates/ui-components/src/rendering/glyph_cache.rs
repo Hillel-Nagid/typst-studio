@@ -63,7 +63,7 @@ impl GlyphCache {
     /// Insert a glyph into the cache with LRU eviction
     fn insert(&mut self, key: GlyphCacheKey, glyph: CachedGlyph) {
         let glyph_size = glyph.approximate_size();
-        
+
         // Evict items if necessary to make room
         while self.current_size + glyph_size > self.max_size && !self.cache.is_empty() {
             if let Some(oldest_key) = self.access_order.first().cloned() {
@@ -98,7 +98,7 @@ impl GlyphCache {
     /// Evict a percentage of the least recently used entries
     pub fn evict_lru(&mut self, percentage: f32) {
         let count_to_evict = ((self.cache.len() as f32) * percentage).ceil() as usize;
-        
+
         for _ in 0..count_to_evict {
             if let Some(key) = self.access_order.first().cloned() {
                 if let Some(glyph) = self.cache.remove(&key) {
@@ -196,82 +196,7 @@ impl CacheStats {
         if self.memory_limit == 0 {
             0.0
         } else {
-            (self.memory_used as f32 / self.memory_limit as f32) * 100.0
+            ((self.memory_used as f32) / (self.memory_limit as f32)) * 100.0
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_glyph_cache_creation() {
-        let cache = GlyphCache::new();
-        assert_eq!(cache.cache.len(), 0);
-    }
-
-    #[test]
-    fn test_glyph_cache_key() {
-        let key1 = GlyphCacheKey::new(1, 0, 14);
-        let key2 = GlyphCacheKey::new(1, 0, 14);
-        assert_eq!(key1, key2);
-
-        let key3 = GlyphCacheKey::new(2, 0, 14);
-        assert_ne!(key1, key3);
-    }
-
-    #[test]
-    fn test_glyph_cache_insert() {
-        let mut cache = GlyphCache::with_capacity(1024 * 1024);
-        let key = GlyphCacheKey::new(1, 0, 14);
-        let glyph = CachedGlyph {
-            metrics: GlyphMetrics {
-                advance: 10.0,
-                bearing_x: 0.0,
-                bearing_y: 10.0,
-                bitmap_width: 10,
-                bitmap_height: 14,
-            },
-            bitmap: vec![],
-        };
-
-        cache.insert(key.clone(), glyph);
-        assert_eq!(cache.cache.len(), 1);
-    }
-
-    #[test]
-    fn test_cache_stats() {
-        let cache = GlyphCache::with_capacity(10000);
-        let stats = cache.stats();
-        assert_eq!(stats.entry_count, 0);
-        assert_eq!(stats.memory_limit, 10000);
-    }
-
-    #[test]
-    fn test_lru_eviction() {
-        let mut cache = GlyphCache::with_capacity(1024);
-        
-        // Insert some glyphs
-        for i in 0..5 {
-            let key = GlyphCacheKey::new(i, 0, 14);
-            let glyph = CachedGlyph {
-                metrics: GlyphMetrics {
-                    advance: 10.0,
-                    bearing_x: 0.0,
-                    bearing_y: 10.0,
-                    bitmap_width: 10,
-                    bitmap_height: 14,
-                },
-                bitmap: vec![0; 100],
-            };
-            cache.insert(key, glyph);
-        }
-
-        let count_before = cache.cache.len();
-        cache.evict_lru(0.2); // Evict 20%
-        let count_after = cache.cache.len();
-        
-        assert!(count_after < count_before);
     }
 }

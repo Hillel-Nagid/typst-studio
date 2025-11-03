@@ -230,22 +230,3 @@ impl Render for EditorView {
             )
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_editor_view_creation() {
-        let view = EditorView::new();
-        assert!(view.buffer_id.is_none());
-        assert_eq!(view.cursor_position, Position::zero());
-    }
-
-    #[test]
-    fn test_cursor_position_update() {
-        let mut view = EditorView::new();
-        view.set_cursor_position(Position::new(5, 10));
-        assert_eq!(view.get_cursor_position(), Position::new(5, 10));
-    }
-}

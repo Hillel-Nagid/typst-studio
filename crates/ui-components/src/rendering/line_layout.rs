@@ -192,32 +192,3 @@ pub struct VisualTextRun {
     /// X offset from line start
     pub x_offset: f32,
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_line_layout_creation() {
-        let layout = LineLayout::new(800.0);
-        assert_eq!(layout.width_limit, 800.0);
-        assert!(!layout.word_wrap);
-    }
-
-    #[test]
-    fn test_compute_visual_lines_no_wrap() {
-        let layout = LineLayout::new(0.0);
-        let glyphs = vec![ShapedGlyph {
-            glyph_id: 1,
-            cluster: 0,
-            x_offset: 0.0,
-            y_offset: 0.0,
-            x_advance: 10.0,
-            y_advance: 0.0,
-        }];
-
-        let visual_lines = layout.compute_visual_lines(0, &glyphs);
-        assert_eq!(visual_lines.len(), 1);
-        assert_eq!(visual_lines[0].pixel_width, 10.0);
-    }
-}

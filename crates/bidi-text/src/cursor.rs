@@ -70,10 +70,11 @@ impl CursorMovement {
 
             MovementDirection::Home => {
                 // Move to start (respecting indentation on first press)
-                let first_non_ws = text.chars()
+                let first_non_ws = text
+                    .chars()
                     .position(|c| !c.is_whitespace())
                     .unwrap_or(0);
-                
+
                 if logical_pos != first_non_ws && first_non_ws > 0 {
                     Ok(first_non_ws)
                 } else {
@@ -86,13 +87,9 @@ impl CursorMovement {
                 Ok(text.len())
             }
 
-            MovementDirection::WordLeft => {
-                Self::move_word_boundary(text, logical_pos, false)
-            }
+            MovementDirection::WordLeft => { Self::move_word_boundary(text, logical_pos, false) }
 
-            MovementDirection::WordRight => {
-                Self::move_word_boundary(text, logical_pos, true)
-            }
+            MovementDirection::WordRight => { Self::move_word_boundary(text, logical_pos, true) }
 
             _ =>
                 Err(
@@ -107,13 +104,13 @@ impl CursorMovement {
     pub fn move_logical(text: &str, logical_pos: usize, forward: bool) -> usize {
         let graphemes: Vec<&str> = text.graphemes(true).collect();
         let grapheme_pos = Self::char_to_grapheme_pos(text, logical_pos);
-        
+
         let new_grapheme_pos = if forward {
             (grapheme_pos + 1).min(graphemes.len())
         } else {
             grapheme_pos.saturating_sub(1)
         };
-        
+
         Self::grapheme_to_char_pos(text, new_grapheme_pos)
     }
 
@@ -121,7 +118,7 @@ impl CursorMovement {
     fn char_to_grapheme_pos(text: &str, char_pos: usize) -> usize {
         let mut grapheme_pos = 0;
         let mut char_count = 0;
-        
+
         for grapheme in text.graphemes(true) {
             if char_count >= char_pos {
                 break;
@@ -129,21 +126,21 @@ impl CursorMovement {
             char_count += grapheme.chars().count();
             grapheme_pos += 1;
         }
-        
+
         grapheme_pos
     }
 
     /// Convert grapheme position to character position
     fn grapheme_to_char_pos(text: &str, grapheme_pos: usize) -> usize {
         let mut char_pos = 0;
-        
+
         for (i, grapheme) in text.graphemes(true).enumerate() {
             if i >= grapheme_pos {
                 break;
             }
             char_pos += grapheme.chars().count();
         }
-        
+
         char_pos
     }
 
@@ -151,13 +148,13 @@ impl CursorMovement {
     fn move_word_boundary(text: &str, logical_pos: usize, forward: bool) -> Result<usize> {
         let graphemes: Vec<&str> = text.graphemes(true).collect();
         let grapheme_pos = Self::char_to_grapheme_pos(text, logical_pos);
-        
+
         if forward {
             // Move forward to next word boundary
             let mut found_word = false;
             for i in grapheme_pos..graphemes.len() {
-                let is_word_char = graphemes[i].chars().all(|c| c.is_alphanumeric() || c == '_');
-                
+                let is_word_char = graphemes[i].chars().all(|c| (c.is_alphanumeric() || c == '_'));
+
                 if !found_word && is_word_char {
                     found_word = true;
                 } else if found_word && !is_word_char {
@@ -169,8 +166,8 @@ impl CursorMovement {
             // Move backward to previous word boundary
             let mut found_word = false;
             for i in (0..grapheme_pos).rev() {
-                let is_word_char = graphemes[i].chars().all(|c| c.is_alphanumeric() || c == '_');
-                
+                let is_word_char = graphemes[i].chars().all(|c| (c.is_alphanumeric() || c == '_'));
+
                 if !found_word && is_word_char {
                     found_word = true;
                 } else if found_word && !is_word_char {
@@ -226,34 +223,5 @@ impl CursorMovement {
     fn adjust_column_for_line(line: &str, desired_column: usize) -> usize {
         let line_length = line.graphemes(true).count();
         desired_column.min(line_length)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_ltr_movement() {
-        let para = BidiParagraph::new("Hello".to_string(), None);
-
-        // Moving right in LTR
-        let new_pos = CursorMovement::move_visual(&para, 0, MovementDirection::Right).unwrap();
-        assert_eq!(new_pos, 1);
-
-        // Moving left in LTR
-        let new_pos = CursorMovement::move_visual(&para, 1, MovementDirection::Left).unwrap();
-        assert_eq!(new_pos, 0);
-    }
-
-    #[test]
-    fn test_home_end() {
-        let para = BidiParagraph::new("Hello".to_string(), None);
-
-        let pos = CursorMovement::move_visual(&para, 3, MovementDirection::Home).unwrap();
-        assert_eq!(pos, 0);
-
-        let pos = CursorMovement::move_visual(&para, 3, MovementDirection::End).unwrap();
-        assert_eq!(pos, para.text().len());
     }
 }

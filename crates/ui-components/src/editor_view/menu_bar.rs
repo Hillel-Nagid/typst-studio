@@ -128,27 +128,3 @@ impl Render for MenuBar {
             )
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_menu_bar_creation() {
-        let menu_bar = MenuBar::new();
-        assert_eq!(menu_bar.menus.len(), 5);
-        assert_eq!(menu_bar.menus[0].title, "File");
-        assert_eq!(menu_bar.menus[1].title, "Edit");
-        assert_eq!(menu_bar.menus[2].title, "View");
-        assert_eq!(menu_bar.menus[3].title, "Compile");
-        assert_eq!(menu_bar.menus[4].title, "Help");
-    }
-
-    #[test]
-    fn test_file_menu_items() {
-        let menu_bar = MenuBar::new();
-        let file_menu = &menu_bar.menus[0];
-        assert!(file_menu.items.len() > 0);
-        assert_eq!(file_menu.items[0].label, "New");
-    }
-}

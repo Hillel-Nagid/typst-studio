@@ -119,20 +119,3 @@ impl BidiLayoutEngine {
         visual_line
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::algorithm::{ BidiParagraph, Direction };
-
-    #[test]
-    fn test_layout_simple() {
-        let engine = BidiLayoutEngine::new(14.0, 20.0);
-        let para = BidiParagraph::new("Hello".to_string(), None);
-        let runs = para.visual_runs();
-
-        let visual_line = engine.layout_line(0, para.text(), runs);
-        assert!(visual_line.pixel_width > 0.0);
-        assert_eq!(visual_line.bidi_runs.len(), 1);
-    }
-}

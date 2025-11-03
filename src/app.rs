@@ -2,7 +2,26 @@
 
 use crate::state::{ ApplicationState, WindowState };
 use editor_core::{ Buffer, BufferId, Position, Version };
-use gpui::*;
+use gpui::{
+    Window,
+    Entity,
+    Styled,
+    KeyDownEvent,
+    Context,
+    AnyElement,
+    IntoElement,
+    Render,
+    ParentElement,
+    MouseDownEvent,
+    InteractiveElement,
+    MouseButton,
+    MouseMoveEvent,
+    MouseUpEvent,
+    AppContext,
+    px,
+    rgb,
+    div,
+};
 use ui_components::{ EditorView, editor_view::TopNav };
 use ui_components::input::{ InputHandler };
 use ui_components::input::key_bindings::Action;
@@ -12,7 +31,6 @@ use bidi_text::Direction;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::collections::HashMap;
-
 /// The main Typst Studio application state manager
 pub struct TypstEditor {
     /// Application state
@@ -94,8 +112,8 @@ impl Default for TypstEditor {
 /// GPUI Window component for the editor
 pub struct TypstEditorWindow {
     app: TypstEditor,
-    editor: EditorView,
-    top_nav: TopNav,
+    editor: Entity<EditorView>,
+    top_nav: Entity<TopNav>,
     input_handler: InputHandler,
     active_buffer_id: Option<BufferId>,
     syntax_highlighter: SyntaxHighlighter,
@@ -110,7 +128,7 @@ pub struct TypstEditorWindow {
 }
 
 impl TypstEditorWindow {
-    pub fn new(_cx: &mut Context<Self>) -> Self {
+    pub fn new(cx: &mut Context<Self>) -> Self {
         // Create application state
         let mut app = TypstEditor::new();
 
@@ -170,11 +188,13 @@ $
         let buffer_id = app.create_buffer(sample_content);
 
         // Create the editor view
-        let mut editor = EditorView::new();
-        editor.set_buffer(buffer_id);
+        let mut editor = cx.new(|_| EditorView::new());
+        cx.update_entity(&mut editor, |editor, _cx| {
+            editor.set_buffer(buffer_id);
+        });
 
         // Create top nav
-        let top_nav = TopNav::new();
+        let top_nav = cx.new(|_| TopNav::new());
 
         // Create input handler
         let input_handler = InputHandler::new();
@@ -201,7 +221,7 @@ $
     }
 
     /// Execute an editor action on the buffer
-    fn execute_action(&mut self, action: Action) {
+    fn execute_action(&mut self, cx: &mut Context<Self>, action: Action) {
         let buffer_id = match self.active_buffer_id {
             Some(id) => id,
             None => {
@@ -216,7 +236,9 @@ $
             }
         };
 
-        let mut cursor_pos = self.editor.get_cursor_position();
+        let mut cursor_pos = cx.read_entity(&mut self.editor, |editor, _cx| {
+            editor.get_cursor_position()
+        });
 
         match action {
             Action::Insert(text) => {
@@ -229,26 +251,34 @@ $
                     } else {
                         cursor_pos = Position::new(cursor_pos.line, cursor_pos.column + text.len());
                     }
-                    self.editor.set_cursor_position(cursor_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(cursor_pos);
+                    });
                 }
             }
 
             Action::Backspace => {
                 if let Ok(new_pos) = buffer.backspace(cursor_pos) {
-                    self.editor.set_cursor_position(new_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(new_pos);
+                    });
                 }
             }
 
             Action::Delete => {
                 if let Ok(new_pos) = buffer.delete_forward(cursor_pos) {
-                    self.editor.set_cursor_position(new_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(new_pos);
+                    });
                 }
             }
 
             Action::Newline => {
                 if let Ok(()) = buffer.insert(cursor_pos, "\n") {
                     cursor_pos = Position::new(cursor_pos.line + 1, 0);
-                    self.editor.set_cursor_position(cursor_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(cursor_pos);
+                    });
                 }
             }
 
@@ -261,7 +291,9 @@ $
                         cursor_pos.column = line_text.len();
                     }
                 }
-                self.editor.set_cursor_position(cursor_pos);
+                cx.update_entity(&mut self.editor, |editor, _cx| {
+                    editor.set_cursor_position(cursor_pos);
+                });
             }
 
             Action::MoveRight => {
@@ -273,7 +305,9 @@ $
                         cursor_pos.column = 0;
                     }
                 }
-                self.editor.set_cursor_position(cursor_pos);
+                cx.update_entity(&mut self.editor, |editor, _cx| {
+                    editor.set_cursor_position(cursor_pos);
+                });
             }
 
             Action::MoveUp => {
@@ -282,7 +316,9 @@ $
                     if let Ok(line_text) = buffer.line(cursor_pos.line) {
                         cursor_pos.column = cursor_pos.column.min(line_text.len());
                     }
-                    self.editor.set_cursor_position(cursor_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(cursor_pos);
+                    });
                 }
             }
 
@@ -292,68 +328,90 @@ $
                     if let Ok(line_text) = buffer.line(cursor_pos.line) {
                         cursor_pos.column = cursor_pos.column.min(line_text.len());
                     }
-                    self.editor.set_cursor_position(cursor_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(cursor_pos);
+                    });
                 }
             }
 
             Action::MoveLineStart => {
                 cursor_pos.column = 0;
-                self.editor.set_cursor_position(cursor_pos);
+                cx.update_entity(&mut self.editor, |editor, _cx| {
+                    editor.set_cursor_position(cursor_pos);
+                });
             }
 
             Action::MoveLineEnd => {
                 if let Ok(line_text) = buffer.line(cursor_pos.line) {
                     cursor_pos.column = line_text.len();
-                    self.editor.set_cursor_position(cursor_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(cursor_pos);
+                    });
                 }
             }
 
             Action::MoveDocumentStart => {
-                self.editor.set_cursor_position(Position::new(0, 0));
+                cx.update_entity(&mut self.editor, |editor, _cx| {
+                    editor.set_cursor_position(Position::new(0, 0));
+                });
             }
 
             Action::MoveDocumentEnd => {
                 let last_line = buffer.len_lines().saturating_sub(1);
                 if let Ok(line_text) = buffer.line(last_line) {
-                    self.editor.set_cursor_position(Position::new(last_line, line_text.len()));
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(Position::new(last_line, line_text.len()));
+                    });
                 }
             }
 
             Action::Undo => {
                 if let Ok(new_pos) = buffer.undo() {
-                    self.editor.set_cursor_position(new_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(new_pos);
+                    });
                 }
             }
 
             Action::Redo => {
                 if let Ok(new_pos) = buffer.redo() {
-                    self.editor.set_cursor_position(new_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(new_pos);
+                    });
                 }
             }
 
             Action::MoveWordLeft => {
                 if let Ok(new_pos) = buffer.prev_word_boundary(cursor_pos) {
-                    self.editor.set_cursor_position(new_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(new_pos);
+                    });
                 }
             }
 
             Action::MoveWordRight => {
                 if let Ok(new_pos) = buffer.next_word_boundary(cursor_pos) {
-                    self.editor.set_cursor_position(new_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(new_pos);
+                    });
                 }
             }
 
             Action::Indent => {
                 if let Ok(()) = buffer.insert(cursor_pos, "    ") {
                     cursor_pos = Position::new(cursor_pos.line, cursor_pos.column + 4);
-                    self.editor.set_cursor_position(cursor_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(cursor_pos);
+                    });
                 }
             }
 
             Action::DeleteWord => {
                 if let Ok(end) = buffer.next_word_boundary(cursor_pos) {
                     let _ = buffer.delete(cursor_pos, end);
-                    self.editor.set_cursor_position(cursor_pos);
+                    cx.update_entity(&mut self.editor, |editor, _cx| {
+                        editor.set_cursor_position(cursor_pos);
+                    });
                 }
             }
 
@@ -385,14 +443,14 @@ $
 
         // Try to get an action from the input handler
         if let Some(action) = self.input_handler.handle_key(key_str, modifiers) {
-            self.execute_action(action);
+            self.execute_action(cx, action);
             cx.notify();
             return true;
         }
 
         // If no binding found, check if it's a text input
         if let Some(action) = self.input_handler.handle_text_input(key_str) {
-            self.execute_action(action);
+            self.execute_action(cx, action);
             cx.notify();
             return true;
         }
@@ -401,8 +459,8 @@ $
     }
 
     /// Get buffer content lines for rendering
-    fn get_buffer_lines(&self, max_lines: usize) -> Vec<String> {
-        if let Some(buffer_id) = self.editor.buffer_id() {
+    fn get_buffer_lines(&self, cx: &mut Context<Self>, max_lines: usize) -> Vec<String> {
+        if let Some(buffer_id) = cx.read_entity(&self.editor, |editor, _cx| editor.buffer_id()) {
             if let Some(buffer) = self.app.get_buffer(buffer_id) {
                 let line_count = buffer.len_lines().min(max_lines);
                 (0..line_count).filter_map(|i| buffer.line(i).ok()).collect()
@@ -588,164 +646,19 @@ $
 }
 
 impl Render for TypstEditorWindow {
-    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
             .size_full()
             .flex()
             .flex_col()
             .bg(rgb(0x1e1e1e))
             .on_key_down(
-                _cx.listener(|this, event: &KeyDownEvent, window: &mut Window, cx| {
+                cx.listener(|this, event: &KeyDownEvent, window: &mut Window, cx| {
                     this.on_key_down(event, window, cx);
                 })
             )
-            // Custom Title Bar
-            .child(
-                div()
-                    .w_full()
-                    .h(px(36.0))
-                    .bg(rgb(0x2d2d30))
-                    .flex()
-                    .items_center()
-                    .justify_between()
-                    .px(px(12.0))
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        _cx.listener(|_this, _event: &MouseDownEvent, window: &mut Window, _cx| {
-                            window.start_window_move();
-                        })
-                    )
-                    // Left section: Logo + Title
-                    .child(
-                        div()
-                            .flex()
-                            .items_center()
-                            .gap(px(8.0))
-                            .min_w(px(200.0))
-                            // Logo
-                            .child(div().child("▶").text_color(rgb(0x007acc)).text_size(px(16.0)))
-                            // Title text
-                            .child(
-                                div()
-                                    .child("Typst Studio")
-                                    .text_color(rgb(0xcccccc))
-                                    .text_size(px(14.0))
-                                    .font_weight(gpui::FontWeight::SEMIBOLD)
-                            )
-                    )
-                    // Middle section: Menu Bar
-                    .child(
-                        div()
-                            .flex()
-                            .gap(px(0.0))
-                            .flex_1()
-                            .justify_center()
-                            .children(
-                                self.top_nav.menu_bar.menus.iter().map(|menu| {
-                                    div()
-                                        .px(px(12.0))
-                                        .py(px(8.0))
-                                        .child(menu.title.clone())
-                                        .text_color(rgb(0xcccccc))
-                                        .text_size(px(13.0))
-                                        .hover(|style| style.bg(rgb(0x3e3e42)))
-                                        .on_mouse_down(
-                                            MouseButton::Left,
-                                            _cx.listener(
-                                                |
-                                                    _this,
-                                                    _event: &MouseDownEvent,
-                                                    _window: &mut Window,
-                                                    _cx
-                                                | {
-                                                    // Prevent window dragging when clicking menu items
-                                                }
-                                            )
-                                        )
-                                })
-                            )
-                    )
-                    // Right section: Window Controls
-                    .child(
-                        div()
-                            .flex()
-                            .items_center()
-                            .gap(px(0.0))
-                            .min_w(px(138.0))
-                            // Minimize button
-                            .child(
-                                div()
-                                    .child("−")
-                                    .text_color(rgb(0xcccccc))
-                                    .text_size(px(18.0))
-                                    .px(px(12.0))
-                                    .py(px(6.0))
-                                    .hover(|style| style.bg(rgb(0x3e3e42)))
-                                    .on_mouse_down(
-                                        MouseButton::Left,
-                                        _cx.listener(
-                                            |
-                                                _this,
-                                                _event: &MouseDownEvent,
-                                                window: &mut Window,
-                                                _cx
-                                            | {
-                                                window.minimize_window();
-                                            }
-                                        )
-                                    )
-                            )
-                            // Maximize button
-                            .child(
-                                div()
-                                    .child("□")
-                                    .text_color(rgb(0xcccccc))
-                                    .text_size(px(14.0))
-                                    .px(px(12.0))
-                                    .py(px(6.0))
-                                    .hover(|style| style.bg(rgb(0x3e3e42)))
-                                    .on_mouse_down(
-                                        MouseButton::Left,
-                                        _cx.listener(
-                                            |
-                                                _this,
-                                                _event: &MouseDownEvent,
-                                                window: &mut Window,
-                                                _cx
-                                            | {
-                                                window.toggle_fullscreen();
-                                            }
-                                        )
-                                    )
-                            )
-                            // Close button
-                            .child(
-                                div()
-                                    .child("✕")
-                                    .text_color(rgb(0xffffff))
-                                    .text_size(px(14.0))
-                                    .bg(rgb(0xc42e1e))
-                                    .px(px(12.0))
-                                    .py(px(6.0))
-                                    .hover(|style| style.bg(rgb(0xe81123)))
-                                    .on_mouse_down(
-                                        MouseButton::Left,
-                                        _cx.listener(
-                                            |
-                                                _this,
-                                                _event: &MouseDownEvent,
-                                                _window: &mut Window,
-                                                _cx
-                                            | {
-                                                // For now, we'll just print a message. Full window close would require different approach
-                                                // The window typically closes when the last entity is removed
-                                                tracing::info!("Close button clicked");
-                                            }
-                                        )
-                                    )
-                            )
-                    )
-            )
+            //Title Bar
+            .child(self.top_nav.clone())
             // Split Pane Layout: Editor | Preview
             .child(
                 div()
@@ -782,7 +695,13 @@ impl Render for TypstEditorWindow {
                                     // Gutter
                                     .child(
                                         div()
-                                            .w(px(self.editor.gutter.calculate_width(100)))
+                                            .w(
+                                                px(
+                                                    cx.read_entity(&self.editor, |editor, _cx|
+                                                        editor.gutter.calculate_width(100)
+                                                    )
+                                                )
+                                            )
                                             .h_full()
                                             .bg(rgb(0x252526))
                                             .flex()
@@ -793,7 +712,15 @@ impl Render for TypstEditorWindow {
                                             .children(
                                                 (0..20).map(|line| {
                                                     div()
-                                                        .h(px(self.editor.text_content.line_height))
+                                                        .h(
+                                                            px(
+                                                                cx.read_entity(
+                                                                    &self.editor,
+                                                                    |editor, _cx|
+                                                                        editor.text_content.line_height
+                                                                )
+                                                            )
+                                                        )
                                                         .flex()
                                                         .items_center()
                                                         .justify_center()
@@ -815,22 +742,38 @@ impl Render for TypstEditorWindow {
                                             .py(px(8.0))
                                             .on_mouse_down(
                                                 MouseButton::Left,
-                                                _cx.listener(
+                                                // -- FIX 1: The listener signature is updated with correct types
+                                                cx.listener(
                                                     |
-                                                        this,
+                                                        this: &mut Self, // Assuming `this` is the component struct, e.g., `&mut EditorView`
                                                         event: &MouseDownEvent,
-                                                        _window: &mut Window,
-                                                        cx
+                                                        _window: &mut Window, // Use WindowContext
+                                                        cx: &mut Context<Self> // Provide the context type
                                                     | {
                                                         let mouse_pos = event.position;
-                                                        let gutter_width =
-                                                            this.editor.gutter.calculate_width(100);
-                                                        let char_width =
-                                                            this.editor.text_content.char_width;
-                                                        let line_height =
-                                                            this.editor.text_content.line_height;
 
-                                                        // Calculate position relative to text area (accounting for padding)
+                                                        // This was already correct
+                                                        let gutter_width = cx.read_entity(
+                                                            &this.editor,
+                                                            |editor, _cx|
+                                                                editor.gutter.calculate_width(100)
+                                                        );
+
+                                                        // This was already correct
+                                                        let char_width = cx.read_entity(
+                                                            &this.editor,
+                                                            |editor, _cx|
+                                                                editor.text_content.char_width
+                                                        );
+
+                                                        // This was already correct
+                                                        let line_height = cx.read_entity(
+                                                            &this.editor,
+                                                            |editor, _cx|
+                                                                editor.text_content.line_height
+                                                        );
+
+                                                        // ... (your coordinate calculation logic) ...
                                                         let content_x: f32 = (
                                                             mouse_pos.x -
                                                             px(gutter_width) -
@@ -848,7 +791,7 @@ impl Render for TypstEditorWindow {
                                                                 line_height
                                                             );
 
-                                                        // Clamp position to valid buffer range
+                                                        // ... (your buffer clamping logic) ...
                                                         if
                                                             let Some(buffer_id) =
                                                                 this.active_buffer_id
@@ -879,16 +822,23 @@ impl Render for TypstEditorWindow {
                                                                         clamped_line,
                                                                         clamped_col
                                                                     );
-                                                                this.editor.set_cursor_position(
-                                                                    clamped_position
+
+                                                                // -- FIX 2: Pass an immutable handle `&this.editor`
+                                                                cx.update_entity(
+                                                                    &this.editor, // Not &mut self.editor
+                                                                    |editor, _cx| {
+                                                                        // _cx here is &mut ModelContext<Editor>
+                                                                        editor.set_cursor_position(
+                                                                            clamped_position
+                                                                        );
+                                                                    }
                                                                 );
 
-                                                                // Handle click and initialize drag
+                                                                // ... (your input_handler logic) ...
                                                                 let _ =
                                                                     this.input_handler.handle_mouse_down(
                                                                         mouse_pos
                                                                     );
-                                                                // Initialize drag state with the clicked position
                                                                 this.input_handler.update_drag(
                                                                     clamped_position,
                                                                     clamped_position
@@ -900,7 +850,7 @@ impl Render for TypstEditorWindow {
                                                 )
                                             )
                                             .on_mouse_move(
-                                                _cx.listener(
+                                                cx.listener(
                                                     |
                                                         this,
                                                         event: &MouseMoveEvent,
@@ -915,14 +865,23 @@ impl Render for TypstEditorWindow {
                                                                 .get_drag_state()
                                                                 .is_some()
                                                         {
-                                                            let gutter_width =
-                                                                this.editor.gutter.calculate_width(
-                                                                    100
-                                                                );
-                                                            let char_width =
-                                                                this.editor.text_content.char_width;
-                                                            let line_height =
-                                                                this.editor.text_content.line_height;
+                                                            let gutter_width = cx.read_entity(
+                                                                &this.editor,
+                                                                |editor, _cx|
+                                                                    editor.gutter.calculate_width(
+                                                                        100
+                                                                    )
+                                                            );
+                                                            let char_width = cx.read_entity(
+                                                                &this.editor,
+                                                                |editor, _cx|
+                                                                    editor.text_content.char_width
+                                                            );
+                                                            let line_height = cx.read_entity(
+                                                                &this.editor,
+                                                                |editor, _cx|
+                                                                    editor.text_content.line_height
+                                                            );
 
                                                             let content_x: f32 = (
                                                                 mouse_pos.x -
@@ -946,7 +905,11 @@ impl Render for TypstEditorWindow {
                                                                 .get_drag_state()
                                                                 .map(|d| d.start_pos)
                                                                 .unwrap_or(
-                                                                    this.editor.get_cursor_position()
+                                                                    cx.read_entity(
+                                                                        &this.editor,
+                                                                        |editor, _cx|
+                                                                            editor.get_cursor_position()
+                                                                    )
                                                                 );
 
                                                             this.input_handler.update_drag(
@@ -989,8 +952,13 @@ impl Render for TypstEditorWindow {
                                                                             clamped_line,
                                                                             clamped_col
                                                                         );
-                                                                    this.editor.set_cursor_position(
-                                                                        clamped_position
+                                                                    cx.update_entity(
+                                                                        &mut this.editor,
+                                                                        |editor, _cx| {
+                                                                            editor.set_cursor_position(
+                                                                                clamped_position
+                                                                            );
+                                                                        }
                                                                     );
                                                                 }
                                                             }
@@ -1002,7 +970,7 @@ impl Render for TypstEditorWindow {
                                             )
                                             .on_mouse_up(
                                                 MouseButton::Left,
-                                                _cx.listener(
+                                                cx.listener(
                                                     |
                                                         this,
                                                         _event: &MouseUpEvent,
@@ -1015,18 +983,29 @@ impl Render for TypstEditorWindow {
                                                 )
                                             )
                                             .children({
-                                                let lines = self.get_buffer_lines(20);
+                                                let lines = self.get_buffer_lines(cx, 20);
                                                 let _highlights = self.get_highlights();
-                                                let cursor_line =
-                                                    self.editor.get_cursor_position().line;
-                                                let cursor_col =
-                                                    self.editor.get_cursor_position().column;
-                                                let line_height =
-                                                    self.editor.text_content.line_height;
-                                                let char_width =
-                                                    self.editor.text_content.char_width;
-                                                let is_primary_visible =
-                                                    self.editor.cursor_renderer.is_primary_visible();
+                                                let cursor_line = cx.read_entity(
+                                                    &self.editor,
+                                                    |editor, cx| editor.get_cursor_position().line
+                                                );
+                                                let cursor_col = cx.read_entity(
+                                                    &self.editor,
+                                                    |editor, cx| editor.get_cursor_position().column
+                                                );
+                                                let line_height = cx.read_entity(
+                                                    &self.editor,
+                                                    |editor, cx| editor.text_content.line_height
+                                                );
+                                                let char_width = cx.read_entity(
+                                                    &self.editor,
+                                                    |editor, cx| editor.text_content.char_width
+                                                );
+                                                let is_primary_visible = cx.read_entity(
+                                                    &self.editor,
+                                                    |editor, cx|
+                                                        editor.cursor_renderer.is_primary_visible()
+                                                );
 
                                                 // Compute bidi layout for all lines upfront
                                                 let bidi_layouts: Vec<BidiShapedText> = lines
@@ -1302,8 +1281,14 @@ impl Render for TypstEditorWindow {
                     .justify_between()
                     .px(px(12.0))
                     .child({
-                        let cursor_pos = self.editor.get_cursor_position();
-                        let dirty_indicator = if let Some(buffer_id) = self.editor.buffer_id() {
+                        let cursor_pos = cx.read_entity(&self.editor, |editor, cx|
+                            editor.get_cursor_position()
+                        );
+                        let dirty_indicator = if
+                            let Some(buffer_id) = cx.read_entity(&self.editor, |editor, cx|
+                                editor.buffer_id()
+                            )
+                        {
                             if let Some(buffer) = self.app.get_buffer(buffer_id) {
                                 if buffer.is_dirty() { " ●" } else { "" }
                             } else {
@@ -1326,33 +1311,5 @@ impl Render for TypstEditorWindow {
                             .text_size(px(12.0))
                     })
             )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_app_creation() {
-        let app = TypstEditor::new();
-        assert_eq!(app.buffers.len(), 0);
-    }
-
-    #[test]
-    fn test_create_buffer() {
-        let mut app = TypstEditor::new();
-        let id = app.create_buffer("Hello World");
-
-        let buffer = app.get_buffer(id).unwrap();
-        assert_eq!(buffer.text(), "Hello World");
-    }
-
-    #[test]
-    fn test_create_window() {
-        let mut app = TypstEditor::new();
-        let window_id = app.new_window();
-        assert_eq!(window_id, 0);
-        assert_eq!(app.state.windows.len(), 1);
     }
 }

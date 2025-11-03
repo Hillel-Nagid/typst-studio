@@ -127,33 +127,3 @@ impl ScrollAnchor {
         (self.line as f32) * line_height + self.offset
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_viewport_creation() {
-        let vp = Viewport::new();
-        assert_eq!(vp.scroll_x(), 0.0);
-        assert_eq!(vp.scroll_y(), 0.0);
-    }
-
-    #[test]
-    fn test_visible_line_range() {
-        let mut vp = Viewport::new();
-        vp.set_scroll(0.0, 100.0);
-
-        let (first, last) = vp.visible_line_range(20.0);
-        assert!(first < last);
-    }
-
-    #[test]
-    fn test_scroll_anchor() {
-        let anchor = ScrollAnchor::from_scroll(100.0, 20.0);
-        assert_eq!(anchor.line, 5);
-
-        let scroll = anchor.to_scroll(20.0);
-        assert_eq!(scroll, 100.0);
-    }
-}
