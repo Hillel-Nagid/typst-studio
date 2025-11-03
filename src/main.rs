@@ -10,6 +10,7 @@ use gpui::{
     AppContext,
     Application,
     Bounds,
+    TitlebarOptions,
     WindowBounds,
     WindowOptions,
     px,
@@ -28,7 +29,12 @@ fn main() {
         let bounds = Bounds::centered(None, size(px(1400.0), px(900.0)), cx);
         cx.open_window(
             WindowOptions {
-                window_bounds: Some(WindowBounds::Windowed(bounds)),
+                window_bounds: Some(WindowBounds::Maximized(bounds)),
+                titlebar: Some(TitlebarOptions {
+                    appears_transparent: true,
+                    ..Default::default()
+                }),
+
                 ..Default::default()
             },
             |_, cx| { cx.new(|cx| TypstEditorWindow::new(cx)) }
