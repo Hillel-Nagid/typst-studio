@@ -1,28 +1,12 @@
 [package]
 name = "preview"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
 
 [dependencies]
-pdfium-render = { version = "0.8", optional = true }
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "std",
-] }
-thiserror = "1.0"
-tracing = "0.1"
-tokio = { version = "1.35", features = [
-    "rt-multi-thread",
-    "net",
-    "fs",
-    "io-util",
-    "time",
-    "macros",
-] }
-
-[features]
-default = []
-with-pdf = ["pdfium-render"]
-
-[dev-dependencies]
-tempfile = "3.8"
+anyhow.workspace = true
+thiserror.workspace = true
+pdfium-render.workspace = true
+lru.workspace = true

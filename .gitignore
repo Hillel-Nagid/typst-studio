@@ -10,26 +10,24 @@ Cargo.lock
 *.swp
 *.swo
 *~
-
-# OS
 .DS_Store
-Thumbs.db
-
-# Logs
-*.log
 
 # Build artifacts
+/dist/
+/build/
 *.exe
 *.dll
 *.so
 *.dylib
 
-# Editor temp files
-.#*
-\#*#
+# Debug
+debug/
+*.log
 
-# Test coverage
-lcov.info
-tarpaulin-report.html
+# Config (user-specific)
+config.toml
+*.local.toml
 
-*.md
+# OS
+Thumbs.db
+.DS_Store

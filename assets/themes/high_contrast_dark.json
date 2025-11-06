@@ -1,0 +1,57 @@
+{
+  "name": "High Contrast Dark",
+  "background": {
+    "editor": "#000000",
+    "sidebar": "#000000",
+    "preview": "#000000",
+    "titlebar": "#000000",
+    "panel": "#000000",
+    "gutter": "#000000"
+  },
+  "foreground": {
+    "editor": "#ffffff",
+    "sidebar": "#ffffff",
+    "preview": "#ffffff",
+    "titlebar": "#ffffff",
+    "panel": "#ffffff",
+    "gutter": "#ffffff"
+  },
+  "semantic": {
+    "error": "#ff0000",
+    "warning": "#ffff00",
+    "info": "#00ffff",
+    "success": "#00ff00",
+    "hint": "#ffffff"
+  },
+  "ui": {
+    "selection_background": "#0000ff",
+    "selection_foreground": "#ffffff",
+    "cursor": "#ffff00",
+    "line_highlight": "#ffffff20",
+    "matching_bracket": "#00ff00",
+    "button_background": "#0000ff",
+    "button_hover": "#0066ff",
+    "button_active": "#0033ff",
+    "input_background": "#000000",
+    "input_border": "#ffffff",
+    "border": "#ffffff",
+    "divider": "#ffffff"
+  },
+  "syntax": {
+    "keyword": "#00ffff",
+    "function": "#ffff00",
+    "variable": "#ffffff",
+    "string": "#ff00ff",
+    "number": "#00ff00",
+    "comment": "#7f7f7f",
+    "type_name": "#00ff00",
+    "operator": "#ffffff",
+    "punctuation": "#ffffff",
+    "heading": "#00ffff",
+    "emphasis": "#ff00ff",
+    "strong": "#ff00ff",
+    "link": "#00ffff",
+    "code": "#ffff00"
+  }
+}
+

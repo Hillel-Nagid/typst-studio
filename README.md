@@ -1,125 +1,191 @@
 # Typst Studio
 
-A high-performance native cross-platform text editor for Typst documents with bidirectional text support, live preview capabilities, and full LSP integration.
+A high-performance native cross-platform text editor for Typst documents with bidirectional text support, live preview, and full LSP integration, built with GPUI.
 
-## Features (Phase 1 - Foundation)
+## Features (Phase 1 & 2 Implementation)
 
-### Completed ✅
+### ✅ Completed
 
-- **Workspace Architecture**: Modular crate structure for maintainability
-- **Text Buffer**: Rope-based text buffer with efficient operations
-- **Selection System**: Multi-cursor support with bidirectional text awareness
-- **Edit Operations**: Undo/redo system with operation grouping
-- **Bidirectional Text**: Full Unicode Bidirectional Algorithm (UAX #9) implementation
-- **Typst Integration**: Compiler integration with world abstraction
-- **Preview System**: Foundation for PDF/SVG preview rendering
-- **LSP Client**: Protocol implementation for language server integration
-- **State Management**: Application, workspace, and editor state architecture
-- **UI Components**: Basic component structure for GPUI integration
+- **Core Architecture**
+
+  - Cargo workspace structure with modular crates
+  - Document and project model implementations
+  - Configuration system with hierarchical settings
+  - Application state management with thread-safe access
+
+- **UI Foundation**
+
+  - GPUI-based application with GPU-accelerated rendering
+  - Window management system
+  - Dark and light theme support with customizable colors
+  - Responsive layout with panel management
+
+- **UI Components**
+  - Main editor panel with line numbers and gutter
+  - PDF preview pane (stub for Phase 7)
+  - File explorer sidebar
+  - Navigation bar with menu system
+  - Console/diagnostics panel
+  - Status bar with document information
+  - Reusable components (buttons, splitters, scrollbars)
+
+### 🚧 Upcoming (Later Phases)
+
+- **Phase 3**: Text buffer with rope data structure, multi-cursor support, undo/redo
+- **Phase 4**: Bidirectional text support (RTL/LTR)
+- **Phase 5**: LSP integration with Typst language server
+- **Phase 6**: Typst compiler integration
+- **Phase 7**: PDF preview rendering
+- **Phase 8**: Advanced features (search/replace, folding, snippets)
+- **Phase 9**: Settings UI and configuration management
+- **Phase 10**: Performance optimization and polish
 
 ## Project Structure
 
 ```
 typst-studio/
 ├── crates/
-│   ├── editor-core/          # Core editing logic
-│   │   ├── buffer/           # Text buffer implementation
-│   │   ├── selection/        # Selection and cursor management
-│   │   └── operations/       # Edit operations (insert, delete, etc.)
-│   ├── typst-integration/    # Typst compiler wrapper
-│   │   ├── compiler/         # Compilation service
-│   │   ├── diagnostics/      # Error handling
-│   │   └── world/            # File system abstraction
-│   ├── bidi-text/            # Bidirectional text handling
-│   │   ├── algorithm/        # UAX #9 implementation
-│   │   ├── layout/           # Visual layout engine
-│   │   └── cursor/           # Bidi-aware cursor movement
-│   ├── preview/              # Preview rendering
-│   │   ├── renderer/         # PDF/SVG rendering
-│   │   ├── sync/             # Source-preview synchronization
-│   │   └── viewport/         # Viewport management
-│   ├── lsp-client/           # LSP client implementation
-│   │   ├── protocol/         # LSP protocol handlers
-│   │   ├── requests/         # Request management
-│   │   └── notifications/    # Notification handling
-│   └── ui-components/        # Reusable UI components
-├── assets/                   # Icons, themes, fonts
-├── tests/                    # Integration tests
-└── src/                      # Main application entry point
+│   ├── editor_core/       # Core data models and logic
+│   │   ├── config.rs      # Configuration system
+│   │   ├── document.rs    # Document model
+│   │   ├── project.rs     # Project model
+│   │   ├── buffer.rs      # Text buffer (rope-based)
+│   │   ├── selection.rs   # Cursor and selection
+│   │   └── state.rs       # Application state management
+│   ├── typst_integration/ # Typst compiler and LSP (stubs)
+│   ├── preview/           # PDF preview rendering (stubs)
+│   └── ui/                # GPUI-based UI components
+│       ├── app.rs         # Application entry point
+│       ├── theme.rs       # Theme system
+│       ├── workspace.rs   # Main window layout
+│       ├── components/    # Reusable UI components
+│       ├── editor.rs      # Editor panel
+│       ├── preview_pane.rs # Preview panel
+│       ├── sidebar.rs     # File explorer
+│       ├── navbar.rs      # Navigation bar
+│       └── console.rs     # Console/diagnostics
+└── src/
+    └── main.rs            # Application entry point
 ```
 
-## Building
+## Building from Source
 
 ### Prerequisites
 
 - Rust 1.75 or later
-- GPUI dependencies (platform-specific)
+- Git
 
-### Build from source
+### Build Steps
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/typst-studio
+git clone https://github.com/Hillel-Nagid/typst-studio.git
 cd typst-studio
 
-# Build
+# Build the project
 cargo build --release
 
-# Run
+# Run the editor
 cargo run --release
 ```
 
-### Development build
+### Development Build
 
 ```bash
-cargo build
+# Build and run in debug mode
 cargo run
+
+# Enable logging
+RUST_LOG=info cargo run
 ```
 
-## Testing
+## Configuration
+
+Configuration files are stored in platform-specific locations:
+
+- **Windows**: `%APPDATA%\typst-studio\config.toml`
+- **macOS**: `~/Library/Application Support/typst-studio/config.toml`
+- **Linux**: `~/.config/typst-studio/config.toml`
+
+Example configuration:
+
+```toml
+[editor]
+font_family = "Fira Code"
+font_size = 14
+line_height = 1.5
+tab_size = 4
+insert_spaces = true
+line_numbers = true
+minimap = true
+
+[appearance]
+theme = "dark"  # or "light"
+ui_scale = 1.0
+
+[compiler]
+auto_compile_on_save = true
+auto_compile_on_change = true
+compilation_delay = 500
+```
+
+## Architecture
+
+### State Management
+
+The application uses a hierarchical state management system:
+
+- **ApplicationState**: Global application state, window management
+- **WorkspaceState**: Per-workspace state, open documents
+- **EditorState**: Per-document state, cursor positions, content
+
+All state is wrapped in `Arc<RwLock<T>>` for thread-safe concurrent access.
+
+### Threading Model
+
+- **Main Thread**: UI rendering and event handling (GPUI)
+- **LSP Thread**: Language server communication (Phase 5)
+- **Compiler Thread**: Document compilation (Phase 6)
+- **File Watcher Thread**: Filesystem monitoring (Phase 6)
+
+### Event Flow
+
+```
+User Input → GPUI Events → Action Handlers → State Updates → UI Re-render
+```
+
+## Development
+
+### Code Style
+
+- Follow Rust naming conventions
+- Use `cargo fmt` for formatting
+- Use `cargo clippy` for linting
+
+### Testing
 
 ```bash
 # Run all tests
 cargo test
 
-# Run tests for a specific crate
-cargo test -p editor-core
-
-# Run with logging
-RUST_LOG=debug cargo test
+# Run tests for specific crate
+cargo test -p editor_core
 ```
-
-## Roadmap
-
-- [x] **Phase 1**: Foundation & Architecture (Current)
-- [ ] **Phase 2**: Text Buffer with Bidirectional Support
-- [ ] **Phase 3**: GPUI Editor View
-- [ ] **Phase 4**: LSP Integration
-- [ ] **Phase 5**: Typst Compilation and Preview
-- [ ] **Phase 6**: Advanced Editor Features
-- [ ] **Phase 7**: Polish and Optimization
-- [ ] **Phase 8**: Release and Deployment
-
-## Architecture
-
-The editor is built using:
-
-- **GPUI**: GPU-accelerated UI framework from Zed
-- **Rope**: Efficient text buffer data structure via `ropey`
-- **Unicode Bidi**: Full bidirectional text support via `unicode-bidi`
-- **Typst**: Integration with Typst compiler and LSP
-- **Tokio**: Async runtime for non-blocking operations
-
-## Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-This project is dual-licensed under MIT OR Apache-2.0.
+MIT OR Apache-2.0
+
+## Contributing
+
+Contributions are welcome! Please read our contributing guidelines before submitting pull requests.
+
+## Roadmap
+
+See [plan.md](plan.md) for the complete implementation roadmap.
 
 ## Acknowledgments
 
-- [Typst](https://github.com/typst/typst) for the amazing typesetting system
-- [Zed](https://github.com/zed-industries/zed) for the GPUI framework
-- Unicode Consortium for the Bidirectional Algorithm specification
+- Built with [GPUI](https://github.com/zed-industries/zed) framework
+- [Typst](https://github.com/typst/typst) document processor
+- Inspired by modern code editors (VS Code, Zed, etc.)

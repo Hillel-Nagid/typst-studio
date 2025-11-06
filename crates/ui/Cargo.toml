@@ -1,0 +1,18 @@
+[package]
+name = "ui"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+gpui.workspace = true
+anyhow.workspace = true
+parking_lot.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+editor_core = { path = "../editor_core" }
+typst_integration = { path = "../typst_integration" }
+preview = { path = "../preview" }
+

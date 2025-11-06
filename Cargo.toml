@@ -1,94 +1,97 @@
-[package]
-name = "typst-studio"
+[workspace]
+members = [
+    "crates/editor_core",
+    "crates/typst_integration",
+    "crates/preview",
+    "crates/ui",
+]
+resolver = "2"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
 authors = ["Hillel Nagid"]
-description = "A native cross-platform editor for Typst with bidirectional text support"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/Hillel-Nagid/typst-editor"
 
-[workspace]
-members = ["crates/*"]
-resolver = "2"
+[workspace.dependencies]
+# UI Framework
+gpui = { git = "https://github.com/zed-industries/zed", default-features = false }
 
-[dependencies]
-# Core dependencies
-editor-core = { path = "crates/editor-core" }
-# typst-integration = { path = "crates/typst-integration" }  # TODO: Fix API compatibility in Phase 2
-bidi-text = { path = "crates/bidi-text" }
-preview = { path = "crates/preview" }
-lsp-client = { path = "crates/lsp-client" }
-ui-components = { path = "crates/ui-components" }
-
-# GPUI framework
-gpui = "0.2.1"
-
-# Typst - Optional feature since not used in main app yet
-typst = { version = "0.12", optional = true }
-typst-syntax = { version = "0.13.1", optional = true }
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+futures = "0.3"
 
 # Text processing
 ropey = "1.6"
 unicode-bidi = "0.3"
 unicode-segmentation = "1.11"
 
-# Async runtime
-tokio = { version = "1.35", features = [
-    "rt-multi-thread",
-    "net",
-    "fs",
-    "io-util",
-    "time",
-    "macros",
-] }
+# Typst integration
+typst = "0.14"
+typst-syntax = "0.14"
 
-# File watching - minimal features for now
-notify = { version = "6.0", features = ["default"] }
+# PDF rendering
+pdfium-render = "0.8.34"
 
-# PDF rendering - optional for Phase 2
-# pdfium-render = "0.8"  # Disabled until actually used in preview
-
-# Serialization
-serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "std",
-] }
+# LSP
+lsp-types = "0.95"
 serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+
+# Configuration
 toml = "0.8"
+directories = "5.0"
+
+# File watching
+notify = "6.1"
 
 # Logging
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = "0.3"
 
 # Error handling
 thiserror = "1.0"
 anyhow = "1.0"
 
-[features]
-default = []
-full-typst = ["typst", "typst-syntax"]
+# Utilities
+parking_lot = "0.12"
+lru = "0.12"
+regex = "1.10"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = "0.4"
 
-[dev-dependencies]
-# Testing
-proptest = "1.4"
-mockall = "0.12"
-assert_cmd = "2.0"
-tempfile = "3.8"
+[package]
+name = "typst-studio"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
 
-# Benchmarking
-criterion = "0.5"
+[dependencies]
+gpui.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
 
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
+editor_core = { path = "crates/editor_core" }
+typst_integration = { path = "crates/typst_integration" }
+preview = { path = "crates/preview" }
+ui = { path = "crates/ui" }
 
-[profile.dev]
-opt-level = 0
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.52", features = [
+    "Win32_UI_Shell",
+    "Win32_System_Com",
+] }
 
-[profile.test]
-opt-level = 0
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "0.25"
+objc = "0.2"
 
-[profile.rust-analyzer]
-inherits = "dev"
-panic = 'unwind'
+[target.'cfg(target_os = "linux")'.dependencies]
+x11 = { version = "2.21", features = ["xlib"] }
+
+[[bin]]
+name = "typst-studio"
+path = "src/main.rs"

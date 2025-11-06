@@ -1,0 +1,57 @@
+{
+  "name": "Light",
+  "background": {
+    "editor": "#ffffff",
+    "sidebar": "#f3f3f3",
+    "preview": "#f8f8f8",
+    "titlebar": "#ececec",
+    "panel": "#f3f3f3",
+    "gutter": "#ffffff"
+  },
+  "foreground": {
+    "editor": "#000000",
+    "sidebar": "#1e1e1e",
+    "preview": "#000000",
+    "titlebar": "#333333",
+    "panel": "#1e1e1e",
+    "gutter": "#237893"
+  },
+  "semantic": {
+    "error": "#e51400",
+    "warning": "#bf8803",
+    "info": "#1a85ff",
+    "success": "#14ce14",
+    "hint": "#6c6c6c"
+  },
+  "ui": {
+    "selection_background": "#add6ff",
+    "selection_foreground": "#000000",
+    "cursor": "#000000",
+    "line_highlight": "#0000000c",
+    "matching_bracket": "#00ff002a",
+    "button_background": "#007acc",
+    "button_hover": "#0098ff",
+    "button_active": "#005a9e",
+    "input_background": "#ffffff",
+    "input_border": "#cecece",
+    "border": "#e7e7e7",
+    "divider": "#e7e7e7"
+  },
+  "syntax": {
+    "keyword": "#0000ff",
+    "function": "#795e26",
+    "variable": "#001080",
+    "string": "#a31515",
+    "number": "#098658",
+    "comment": "#008000",
+    "type_name": "#267f99",
+    "operator": "#000000",
+    "punctuation": "#000000",
+    "heading": "#0000ff",
+    "emphasis": "#811f3f",
+    "strong": "#811f3f",
+    "link": "#0000ff",
+    "code": "#a31515"
+  }
+}
+
