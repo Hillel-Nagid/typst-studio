@@ -1,5 +1,6 @@
 use crate::theme::Theme;
 use gpui::*;
+use gpui::prelude::FluentBuilder;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -10,7 +11,7 @@ pub struct Input {
     is_password: bool,
     has_error: bool,
     error_message: Option<String>,
-    on_change: Option<Arc<dyn Fn(String, &mut WindowContext) + Send + Sync>>,
+    on_change: Option<Arc<dyn Fn(String, &mut Context<Self>) + Send + Sync>>,
 }
 
 impl Input {
@@ -38,8 +39,7 @@ impl Input {
     }
 
     pub fn on_change<F>(mut self, handler: F) -> Self
-    where
-        F: Fn(String, &mut WindowContext) + Send + Sync + 'static,
+        where F: Fn(String, &mut Context<Self>) + Send + Sync + 'static
     {
         self.on_change = Some(Arc::new(handler));
         self
@@ -55,7 +55,7 @@ impl Input {
 }
 
 impl Render for Input {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let bg_color = theme.parse_color(&theme.ui.input_background);
         let border_color = if self.has_error {
@@ -82,22 +82,18 @@ impl Render for Input {
                     .text_color(fg_color)
                     .child(
                         if self.value.is_empty() {
-                            div().text_color(placeholder_color).child(&self.placeholder)
+                            div().text_color(placeholder_color).child(self.placeholder.clone())
                         } else if self.is_password {
                             div().child("•".repeat(self.value.len()))
                         } else {
-                            div().child(&self.value)
+                            div().child(self.value.clone())
                         }
-                    ),
+                    )
             )
             .when_some(self.error_message.clone(), |this, msg| {
                 this.child(
-                    div()
-                        .text_xs()
-                        .text_color(theme.parse_color(&theme.semantic.error))
-                        .child(msg),
+                    div().text_xs().text_color(theme.parse_color(&theme.semantic.error)).child(msg)
                 )
             })
     }
 }
-

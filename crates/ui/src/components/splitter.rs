@@ -33,22 +33,14 @@ impl Splitter {
 }
 
 impl Render for Splitter {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let divider_color = theme.parse_color(&theme.ui.divider);
 
         match self.direction {
-            SplitDirection::Horizontal => div()
-                .h_1()
-                .w_full()
-                .bg(divider_color)
-                .cursor_row_resize(),
-            SplitDirection::Vertical => div()
-                .w_1()
-                .h_full()
-                .bg(divider_color)
-                .cursor_col_resize(),
+            SplitDirection::Horizontal =>
+                div().h_1().w_full().bg(divider_color).cursor_row_resize(),
+            SplitDirection::Vertical => div().w_1().h_full().bg(divider_color).cursor_col_resize(),
         }
     }
 }
-

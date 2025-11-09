@@ -1,5 +1,6 @@
 use crate::theme::Theme;
 use gpui::*;
+use gpui::prelude::FluentBuilder;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -7,7 +8,7 @@ pub struct MenuItem {
     pub label: String,
     pub shortcut: Option<String>,
     pub enabled: bool,
-    pub action: Option<Arc<dyn Fn(&mut WindowContext) + Send + Sync>>,
+    pub action: Option<Arc<dyn Fn(&mut Context<Self>) + Send + Sync>>,
     pub is_separator: bool,
 }
 
@@ -43,8 +44,7 @@ impl MenuItem {
     }
 
     pub fn on_select<F>(mut self, handler: F) -> Self
-    where
-        F: Fn(&mut WindowContext) + Send + Sync + 'static,
+        where F: Fn(&mut Context<Self>) + Send + Sync + 'static
     {
         self.action = Some(Arc::new(handler));
         self
@@ -80,7 +80,7 @@ impl ContextMenu {
 }
 
 impl Render for ContextMenu {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let bg_color = theme.parse_color(&theme.background.panel);
         let fg_color = theme.parse_color(&theme.foreground.panel);
@@ -99,47 +99,42 @@ impl Render for ContextMenu {
             .border_color(border_color)
             .rounded_md()
             .shadow_lg()
-            .z_index(9999)
-            .py_1()
-            .children(self.items.iter().map(|item| {
-                if item.is_separator {
-                    div()
-                        .h_px()
-                        .w_full()
-                        .bg(border_color)
-                        .my_1()
-                } else {
-                    let opacity = if item.enabled { 1.0 } else { 0.5 };
-                    let action = item.action.clone();
+            //TODO: fix z-index .z_index(9999)
+            //.py_1()
+            .children(
+                self.items.iter().map(|item| {
+                    if item.is_separator {
+                        div().h_px().w_full().bg(border_color).my_1()
+                    } else {
+                        let opacity = if item.enabled { 1.0 } else { 0.5 };
+                        let action = item.action.clone();
 
-                    div()
-                        .w_full()
-                        .px_3()
-                        .py_2()
-                        .flex()
-                        .flex_row()
-                        .justify_between()
-                        .items_center()
-                        .text_color(fg_color)
-                        .opacity(opacity)
-                        .when(item.enabled, |this| {
-                            this.hover(|style| style.bg(hover_color))
-                                .cursor_pointer()
-                                .when_some(action, |this, handler| {
-                                    this.on_click(move |_, cx| handler(cx))
-                                })
-                        })
-                        .child(div().text_sm().child(item.label.clone()))
-                        .when_some(item.shortcut.clone(), |this, shortcut| {
-                            this.child(
-                                div()
-                                    .text_xs()
-                                    .opacity(0.7)
-                                    .child(shortcut),
-                            )
-                        })
-                }
-            }))
+                        div()
+                            .w_full()
+                            .px_3()
+                            .py_2()
+                            .flex()
+                            .flex_row()
+                            .justify_between()
+                            .items_center()
+                            .text_color(fg_color)
+                            .opacity(opacity)
+                            .when(item.enabled, |this| {
+                                this.hover(|style| style.bg(hover_color))
+                                    .cursor_pointer()
+                                    .when_some(action, |this, handler| {
+                                        this.on_mouse_down(
+                                            MouseButton::Left,
+                                            move |_mouse_event, _window, cx| handler(&mut cx) // TODO: fix handler type
+                                        )
+                                    })
+                            })
+                            .child(div().text_sm().child(item.label.clone()))
+                            .when_some(item.shortcut.clone(), |this, shortcut| {
+                                this.child(div().text_xs().opacity(0.7).child(shortcut))
+                            })
+                    }
+                })
+            )
     }
 }
-

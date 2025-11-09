@@ -8,13 +8,13 @@ pub struct ConsolePanel {
 }
 
 impl ConsolePanel {
-    pub fn new(theme: Arc<RwLock<Theme>>, cx: &mut Context) -> Self {
+    pub fn new(theme: Arc<RwLock<Theme>>, _cx: &mut Context<Self>) -> Self {
         Self { theme }
     }
 }
 
 impl Render for ConsolePanel {
-    fn render(&mut self, cx: &mut Context) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let bg_color = theme.parse_color(&theme.background.panel);
         let fg_color = theme.parse_color(&theme.foreground.panel);
@@ -46,7 +46,7 @@ impl Render for ConsolePanel {
                             .flex_row()
                             .gap_4()
                             .text_sm()
-                            .child(div().font_bold().child("Problems"))
+                            .child(div().font_weight(FontWeight::BOLD).child("Problems"))
                             .child(div().opacity(0.7).child("Output"))
                             .child(div().opacity(0.7).child("Terminal"))
                     )
@@ -56,9 +56,8 @@ impl Render for ConsolePanel {
             .child(
                 div()
                     .flex_1()
-                    .p_2()
-                    .overflow_y_scroll()
                     .text_sm()
+                    //TODO: add scroll and padding
                     .child(div().opacity(0.6).child("No problems detected"))
             )
     }

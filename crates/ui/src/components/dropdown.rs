@@ -1,5 +1,6 @@
 use crate::theme::Theme;
 use gpui::*;
+use gpui::prelude::FluentBuilder;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -13,7 +14,7 @@ pub struct Dropdown {
     options: Vec<DropdownOption>,
     selected_index: usize,
     is_open: bool,
-    on_select: Option<Arc<dyn Fn(String, &mut WindowContext) + Send + Sync>>,
+    on_select: Option<Arc<dyn Fn(String, &mut Context<Self>) + Send + Sync>>,
 }
 
 impl Dropdown {
@@ -28,8 +29,7 @@ impl Dropdown {
     }
 
     pub fn on_select<F>(mut self, handler: F) -> Self
-    where
-        F: Fn(String, &mut WindowContext) + Send + Sync + 'static,
+        where F: Fn(String, &mut Context<Self>) + Send + Sync + 'static
     {
         self.on_select = Some(Arc::new(handler));
         self
@@ -49,15 +49,14 @@ impl Dropdown {
 }
 
 impl Render for Dropdown {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let bg_color = theme.parse_color(&theme.ui.input_background);
         let border_color = theme.parse_color(&theme.ui.input_border);
         let fg_color = theme.parse_color(&theme.foreground.editor);
         let hover_color = theme.parse_color(&theme.ui.button_hover);
 
-        let selected_label = self
-            .options
+        let selected_label = self.options
             .get(self.selected_index)
             .map(|o| o.label.clone())
             .unwrap_or_default();
@@ -81,7 +80,11 @@ impl Render for Dropdown {
                     .justify_between()
                     .items_center()
                     .child(div().child(selected_label))
-                    .child(div().child(if self.is_open { "▲" } else { "▼" }).text_xs()),
+                    .child(
+                        div()
+                            .child(if self.is_open { "▲" } else { "▼" })
+                            .text_xs()
+                    )
             )
             .when(self.is_open, |this| {
                 this.child(
@@ -91,35 +94,41 @@ impl Render for Dropdown {
                         .left_0()
                         .w_full()
                         .max_h_64()
-                        .overflow_y_scroll()
+                        //TODO: add scroll on overflow
                         .bg(bg_color)
                         .border_1()
                         .border_color(border_color)
                         .rounded_md()
                         .shadow_lg()
-                        .z_index(1000)
-                        .children(self.options.iter().enumerate().map(|(idx, option)| {
-                            let is_selected = idx == self.selected_index;
-                            let on_select = self.on_select.clone();
-                            let value = option.value.clone();
+                        //TODO: fix z-index .z_index(1000)
+                        .children(
+                            self.options
+                                .iter()
+                                .enumerate()
+                                .map(|(idx, option)| {
+                                    let is_selected = idx == self.selected_index;
+                                    let on_select = self.on_select.clone();
+                                    let value = option.value.clone();
 
-                            div()
-                                .w_full()
-                                .px_3()
-                                .py_2()
-                                .text_color(fg_color)
-                                .when(is_selected, |this| {
-                                    this.bg(hover_color)
+                                    div()
+                                        .w_full()
+                                        .px_3()
+                                        .py_2()
+                                        .text_color(fg_color)
+                                        .when(is_selected, |this| { this.bg(hover_color) })
+                                        .hover(|style| style.bg(hover_color))
+                                        .cursor_pointer()
+                                        .when_some(on_select, |this, handler| {
+                                            this.on_mouse_down(
+                                                MouseButton::Left,
+                                                move |_mouse_event, _window, cx|
+                                                    handler(value.clone(), &mut cx) // TODO: fix handler type
+                                            )
+                                        })
+                                        .child(option.label.clone())
                                 })
-                                .hover(|style| style.bg(hover_color))
-                                .cursor_pointer()
-                                .when_some(on_select, |this, handler| {
-                                    this.on_click(move |_, cx| handler(value.clone(), cx))
-                                })
-                                .child(option.label.clone())
-                        })),
+                        )
                 )
             })
     }
 }
-

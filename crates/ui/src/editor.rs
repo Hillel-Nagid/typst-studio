@@ -13,14 +13,14 @@ impl EditorPanel {
     pub fn new(
         theme: Arc<RwLock<Theme>>,
         state: Arc<RwLock<ApplicationState>>,
-        cx: &mut ViewContext<Self>,
+        _cx: &mut Context<Self>
     ) -> Self {
         Self { theme, state }
     }
 }
 
 impl Render for EditorPanel {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let bg_color = theme.parse_color(&theme.background.editor);
         let fg_color = theme.parse_color(&theme.foreground.editor);
@@ -61,7 +61,7 @@ impl Render for EditorPanel {
                     .flex_col()
                     .p_2()
                     .text_xs()
-                    .children((1..=20).map(|i| div().child(format!("{}", i)))),
+                    .children((1..=20).map(|i| div().child(format!("{}", i))))
             )
             // Editor content
             .child(
@@ -70,13 +70,8 @@ impl Render for EditorPanel {
                     .p_2()
                     .font_family("monospace")
                     .text_sm()
-                    .overflow_y_scroll()
-                    .child(
-                        div()
-                            .whitespace_pre_wrap()
-                            .child(content),
-                    ),
+                    //TODO: add scroll on overflow
+                    .child(div().whitespace_normal().child(content))
             )
     }
 }
-

@@ -24,7 +24,7 @@ impl StatusBar {
 }
 
 impl Render for StatusBar {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let bg_color = theme.parse_color(&theme.background.panel);
         let fg_color = theme.parse_color(&theme.foreground.panel);
@@ -45,15 +45,14 @@ impl Render for StatusBar {
                     .flex()
                     .flex_row()
                     .gap_4()
-                    .children(self.left_items.iter().map(|item| div().child(item.clone()))),
+                    .children(self.left_items.iter().map(|item| div().child(item.clone())))
             )
             .child(
                 div()
                     .flex()
                     .flex_row()
                     .gap_4()
-                    .children(self.right_items.iter().map(|item| div().child(item.clone()))),
+                    .children(self.right_items.iter().map(|item| div().child(item.clone())))
             )
     }
 }
-

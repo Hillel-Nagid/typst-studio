@@ -28,7 +28,7 @@ impl Tooltip {
 }
 
 impl Render for Tooltip {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let bg_color = theme.parse_color(&theme.background.panel);
         let fg_color = theme.parse_color(&theme.foreground.panel);
@@ -50,8 +50,7 @@ impl Render for Tooltip {
             .text_xs()
             .max_w_64()
             .shadow_lg()
-            .z_index(9999)
+            //TODO: fix z-index .z_index(9999)
             .child(self.content.clone())
     }
 }
-

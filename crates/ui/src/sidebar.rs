@@ -19,7 +19,7 @@ impl Sidebar {
     pub fn new(
         theme: Arc<RwLock<Theme>>,
         state: Arc<RwLock<ApplicationState>>,
-        cx: &mut ViewContext<Self>,
+        cx: &mut Context<Self>
     ) -> Self {
         Self {
             theme,
@@ -30,7 +30,7 @@ impl Sidebar {
 }
 
 impl Render for Sidebar {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let bg_color = theme.parse_color(&theme.background.sidebar);
         let fg_color = theme.parse_color(&theme.foreground.sidebar);
@@ -56,14 +56,14 @@ impl Render for Sidebar {
                     .gap_2()
                     .border_b_1()
                     .border_color(theme.parse_color(&theme.ui.border))
-                    .child(div().text_sm().font_bold().child("Explorer")),
+                    .child(div().text_sm().font_weight(FontWeight::BOLD).child("Explorer"))
             )
             // Content
             .child(
                 div()
                     .flex_1()
                     .p_2()
-                    .overflow_y_scroll()
+                    //TODO: add scroll on overflow
                     .child(
                         div()
                             .flex()
@@ -71,9 +71,8 @@ impl Render for Sidebar {
                             .gap_1()
                             .text_sm()
                             .child(div().child("📄 untitled.typ"))
-                            .child(div().opacity(0.6).child("No files open")),
-                    ),
+                            .child(div().opacity(0.6).child("No files open"))
+                    )
             )
     }
 }
-

@@ -1,5 +1,6 @@
 use crate::theme::Theme;
 use gpui::*;
+use gpui::prelude::FluentBuilder;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -14,8 +15,8 @@ pub struct Tab {
 pub struct Tabs {
     theme: Arc<RwLock<Theme>>,
     tabs: Vec<Tab>,
-    on_select: Option<Arc<dyn Fn(String, &mut WindowContext) + Send + Sync>>,
-    on_close: Option<Arc<dyn Fn(String, &mut WindowContext) + Send + Sync>>,
+    on_select: Option<Arc<dyn Fn(String, &mut Context<Self>) + Send + Sync>>,
+    on_close: Option<Arc<dyn Fn(String, &mut Context<Self>) + Send + Sync>>,
 }
 
 impl Tabs {
@@ -33,14 +34,14 @@ impl Tabs {
     }
 
     pub fn on_select<F>(mut self, handler: F) -> Self
-        where F: Fn(String, &mut WindowContext) + Send + Sync + 'static
+        where F: Fn(String, &mut Context<Self>) + Send + Sync + 'static
     {
         self.on_select = Some(Arc::new(handler));
         self
     }
 
     pub fn on_close<F>(mut self, handler: F) -> Self
-        where F: Fn(String, &mut WindowContext) + Send + Sync + 'static
+        where F: Fn(String, &mut Context<Self>) + Send + Sync + 'static
     {
         self.on_close = Some(Arc::new(handler));
         self
@@ -48,7 +49,7 @@ impl Tabs {
 }
 
 impl Render for Tabs {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let bg_color = theme.parse_color(&theme.background.panel);
         let border_color = theme.parse_color(&theme.ui.border);
@@ -62,7 +63,7 @@ impl Render for Tabs {
             .flex()
             .flex_row()
             .items_center()
-            .overflow_x_scroll()
+            //TODO: fix .overflow_x_scroll()
             .children(
                 self.tabs.iter().map(|tab| {
                     let active_bg = if tab.is_active {
@@ -89,7 +90,10 @@ impl Render for Tabs {
                         .border_color(border_color)
                         .cursor_pointer()
                         .when_some(on_select.clone(), |this, handler| {
-                            this.on_click(move |_, cx| handler(tab_id.clone(), cx))
+                            this.on_mouse_down(
+                                MouseButton::Left,
+                                move |_mouse_event, _window, cx| handler(tab_id.clone(), &mut cx) // TODO: fix handler type
+                            )
                         })
                         .when(tab.is_dirty, |this| { this.child(div().child("●").text_xs()) })
                         .child(div().child(tab.label.clone()))
@@ -101,10 +105,12 @@ impl Render for Tabs {
                                     .opacity(0.6)
                                     .hover(|style| style.opacity(1.0))
                                     .when_some(on_close, |this, handler| {
-                                        this.on_click(move |event, cx| {
-                                            event.stop_propagation();
-                                            handler(tab_id_close.clone(), cx)
-                                        })
+                                        this.on_mouse_down(
+                                            MouseButton::Left,
+                                            move |_mouse_event, _window, cx| {
+                                                handler(tab_id_close.clone(), &mut cx) // TODO: fix handler type
+                                            }
+                                        )
                                     })
                             )
                         })

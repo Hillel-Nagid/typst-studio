@@ -8,13 +8,13 @@ pub struct PreviewPane {
 }
 
 impl PreviewPane {
-    pub fn new(theme: Arc<RwLock<Theme>>, cx: &mut ViewContext<Self>) -> Self {
+    pub fn new(theme: Arc<RwLock<Theme>>, cx: &mut Context<Self>) -> Self {
         Self { theme }
     }
 }
 
 impl Render for PreviewPane {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let bg_color = theme.parse_color(&theme.background.preview);
         let fg_color = theme.parse_color(&theme.foreground.preview);
@@ -34,8 +34,7 @@ impl Render for PreviewPane {
                     .items_center()
                     .gap_4()
                     .child(div().text_2xl().child("Preview"))
-                    .child(div().text_sm().opacity(0.7).child("PDF preview will appear here")),
+                    .child(div().text_sm().opacity(0.7).child("PDF preview will appear here"))
             )
     }
 }
-

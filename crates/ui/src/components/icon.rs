@@ -5,9 +5,9 @@ use std::sync::Arc;
 
 #[derive(Clone, Copy)]
 pub enum IconSize {
-    Small,   // 12px
-    Medium,  // 16px
-    Large,   // 24px
+    Small, // 12px
+    Medium, // 16px
+    Large, // 24px
 }
 
 impl IconSize {
@@ -75,7 +75,7 @@ impl Icon {
 }
 
 impl Render for Icon {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let color = theme.parse_color(&theme.foreground.editor);
 
@@ -88,4 +88,3 @@ impl Render for Icon {
             .child(self.icon_type.to_emoji())
     }
 }
-

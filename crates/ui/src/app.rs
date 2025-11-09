@@ -11,11 +11,11 @@ pub struct TypstEditorApp {
 }
 
 impl TypstEditorApp {
-    pub fn new(cx: &mut Context) -> Self {
+    pub fn new(_cx: &mut Context<Self>) -> Self {
         let config = Config::load();
         let theme = if config.appearance.theme == "light" { Theme::light() } else { Theme::dark() };
 
-        let mut state = ApplicationState::new(config);
+        let state = ApplicationState::new(config);
 
         Self {
             state: Arc::new(RwLock::new(state)),
@@ -23,16 +23,16 @@ impl TypstEditorApp {
         }
     }
 
-    pub fn open_main_window(&self, cx: &mut Context) {
+    pub fn open_main_window(&self, cx: &mut Context<Self>) {
         let state = self.state.clone();
         let theme = self.theme.clone();
 
         let window_id = cx
-            .open_window(WindowOptions::default(), |cx| {
+            .open_window(WindowOptions::default(), |window, cx| {
                 let workspace = WorkspaceState::new(0);
                 state.write().add_window(0, workspace);
 
-                cx.new_view(|cx| MainWindow::new(state.clone(), theme.clone(), cx))
+                cx.new(|cx| MainWindow::new(state.clone(), theme.clone(), cx))
             })
             .unwrap();
     }

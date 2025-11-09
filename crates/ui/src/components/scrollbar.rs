@@ -28,7 +28,7 @@ impl Scrollbar {
 }
 
 impl Render for Scrollbar {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let bg_color = theme.parse_color(&theme.background.gutter);
         let thumb_color = theme.parse_color(&theme.ui.border);
@@ -44,8 +44,7 @@ impl Render for Scrollbar {
                     .bg(thumb_color)
                     .rounded_sm()
                     .opacity(0.7)
-                    .hover(|style| style.opacity(1.0)),
+                    .hover(|style| style.opacity(1.0))
             )
     }
 }
-

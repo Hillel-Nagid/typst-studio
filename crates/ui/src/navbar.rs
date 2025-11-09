@@ -8,13 +8,13 @@ pub struct NavBar {
 }
 
 impl NavBar {
-    pub fn new(theme: Arc<RwLock<Theme>>, cx: &mut ViewContext<Self>) -> Self {
+    pub fn new(theme: Arc<RwLock<Theme>>, _cx: &mut Context<Self>) -> Self {
         Self { theme }
     }
 }
 
 impl Render for NavBar {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme.read();
         let bg_color = theme.parse_color(&theme.background.titlebar);
         let fg_color = theme.parse_color(&theme.foreground.titlebar);
@@ -37,7 +37,7 @@ impl Render for NavBar {
                     .flex_row()
                     .gap_4()
                     .items_center()
-                    .child(div().font_bold().text_lg().child("Typst Studio"))
+                    .child(div().font_weight(FontWeight::BOLD).text_lg().child("Typst Studio"))
                     .child(
                         div()
                             .flex()
@@ -47,8 +47,8 @@ impl Render for NavBar {
                             .child(div().child("File"))
                             .child(div().child("Edit"))
                             .child(div().child("View"))
-                            .child(div().child("Help")),
-                    ),
+                            .child(div().child("Help"))
+                    )
             )
             .child(
                 div()
@@ -57,8 +57,7 @@ impl Render for NavBar {
                     .gap_2()
                     .text_sm()
                     .child(div().child("🔍"))
-                    .child(div().child("⚙️")),
+                    .child(div().child("⚙️"))
             )
     }
 }
-

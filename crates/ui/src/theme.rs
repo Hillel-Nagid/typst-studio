@@ -1,5 +1,5 @@
-use gpui::Hsla;
-use serde::{Deserialize, Serialize};
+use gpui::{ Hsla, Rgba };
+use serde::{ Deserialize, Serialize };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Theme {
@@ -186,15 +186,15 @@ impl Theme {
     pub fn parse_color(&self, color_str: &str) -> Hsla {
         // Parse hex color string to GPUI color
         if let Some(stripped) = color_str.strip_prefix('#') {
-            let r = u8::from_str_radix(&stripped[0..2], 16).unwrap_or(0) as f32 / 255.0;
-            let g = u8::from_str_radix(&stripped[2..4], 16).unwrap_or(0) as f32 / 255.0;
-            let b = u8::from_str_radix(&stripped[4..6], 16).unwrap_or(0) as f32 / 255.0;
+            let r = (u8::from_str_radix(&stripped[0..2], 16).unwrap_or(0) as f32) / 255.0;
+            let g = (u8::from_str_radix(&stripped[2..4], 16).unwrap_or(0) as f32) / 255.0;
+            let b = (u8::from_str_radix(&stripped[4..6], 16).unwrap_or(0) as f32) / 255.0;
             let a = if stripped.len() > 6 {
-                u8::from_str_radix(&stripped[6..8], 16).unwrap_or(255) as f32 / 255.0
+                (u8::from_str_radix(&stripped[6..8], 16).unwrap_or(255) as f32) / 255.0
             } else {
                 1.0
             };
-            Hsla::from_rgb(r, g, b, a)
+            Hsla::from(Rgba { r, g, b, a })
         } else {
             Hsla::default()
         }
@@ -206,4 +206,3 @@ impl Default for Theme {
         Self::dark()
     }
 }
-
