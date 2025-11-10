@@ -8,7 +8,7 @@ pub struct MenuItem {
     pub label: String,
     pub shortcut: Option<String>,
     pub enabled: bool,
-    pub action: Option<Arc<dyn Fn(&mut Context<Self>) + Send + Sync>>,
+    pub action: Option<Arc<dyn Fn(&mut App) + Send + Sync + 'static>>,
     pub is_separator: bool,
 }
 
@@ -43,9 +43,7 @@ impl MenuItem {
         self
     }
 
-    pub fn on_select<F>(mut self, handler: F) -> Self
-        where F: Fn(&mut Context<Self>) + Send + Sync + 'static
-    {
+    pub fn on_select<F>(mut self, handler: F) -> Self where F: Fn(&mut App) + Send + Sync + 'static {
         self.action = Some(Arc::new(handler));
         self
     }
@@ -125,7 +123,7 @@ impl Render for ContextMenu {
                                     .when_some(action, |this, handler| {
                                         this.on_mouse_down(
                                             MouseButton::Left,
-                                            move |_mouse_event, _window, cx| handler(&mut cx) // TODO: fix handler type
+                                            move |_mouse_event, _window, cx| { handler(cx) } // TODO: fix handler type
                                         )
                                     })
                             })

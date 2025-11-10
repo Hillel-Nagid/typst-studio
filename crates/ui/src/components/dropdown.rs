@@ -119,11 +119,7 @@ impl Render for Dropdown {
                                         .hover(|style| style.bg(hover_color))
                                         .cursor_pointer()
                                         .when_some(on_select, |this, handler| {
-                                            this.on_mouse_down(
-                                                MouseButton::Left,
-                                                move |_mouse_event, _window, cx|
-                                                    handler(value.clone(), &mut cx) // TODO: fix handler type
-                                            )
+                                            this.on_click(move |_, cx| handler(value.clone(), cx))
                                         })
                                         .child(option.label.clone())
                                 })
