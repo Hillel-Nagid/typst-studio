@@ -1,3 +1,4 @@
+use crate::components::clickable::{ Clickable, ClickHandler };
 use crate::theme::Theme;
 use gpui::*;
 use gpui::prelude::FluentBuilder;
@@ -12,7 +13,6 @@ pub enum ButtonVariant {
     Ghost,
 }
 
-type ClickHandler = Arc<dyn Fn(&mut App) + Send + Sync + 'static>;
 pub struct Button {
     label: SharedString,
     variant: ButtonVariant,
@@ -58,30 +58,22 @@ impl Render for Button {
                 })
             })
          */
-        div()
-            .on_mouse_down(
-                MouseButton::Left,
-                |_mouse_event, _window, _cx| {
-                    // TODO: add local style state, update it and then notify
-                    // _cx.style(move |style| style.bg(theme.parse_color(&theme.ui.button_active)))
-                }
-            )
+        let button = div()
+            .on_mouse_down(MouseButton::Left, |_mouse_event, window, _cx| {
+                window.prevent_default();
+                // TODO: add local style state, update it and then notify
+                // _cx.style(move |style| style.bg(theme.parse_color(&theme.ui.button_active)))
+            })
             .hover(|style| style.bg(theme.parse_color(&theme.ui.button_hover)))
             .bg(bg_color)
             .text_color(fg_color)
-            .when_some(on_click, |this, handler| {
-                this.on_mouse_down(
-                    MouseButton::Left,
-                    move |_mouse_event, _window, cx| {
-                        _window.prevent_default();
-                        handler(cx)
-                    } // TODO: fix handler type
-                )
-            })
             //     .px_4()
             //     .py_2()
             // .rounded_md()
-            // .cursor_pointer()
-            .child(self.label.clone())
+            .child(self.label.clone());
+
+        Clickable::new(button).when_some(on_click, |clickable, handler| {
+            clickable.on_click(handler)
+        })
     }
 }

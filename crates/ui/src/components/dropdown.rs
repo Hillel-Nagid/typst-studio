@@ -3,6 +3,7 @@ use gpui::*;
 use gpui::prelude::FluentBuilder;
 use parking_lot::RwLock;
 use std::sync::Arc;
+use crate::components::clickable::{ Clickable, ClickHandler };
 
 pub struct DropdownOption {
     pub value: String,
@@ -14,7 +15,7 @@ pub struct Dropdown {
     options: Vec<DropdownOption>,
     selected_index: usize,
     is_open: bool,
-    on_select: Option<Arc<dyn Fn(String, &mut Context<Self>) + Send + Sync>>,
+    on_select: Option<ClickHandler>,
 }
 
 impl Dropdown {
@@ -28,10 +29,8 @@ impl Dropdown {
         }
     }
 
-    pub fn on_select<F>(mut self, handler: F) -> Self
-        where F: Fn(String, &mut Context<Self>) + Send + Sync + 'static
-    {
-        self.on_select = Some(Arc::new(handler));
+    pub fn on_select(mut self, handler: ClickHandler) -> Self {
+        self.on_select = Some(handler);
         self
     }
 
@@ -61,7 +60,7 @@ impl Render for Dropdown {
             .map(|o| o.label.clone())
             .unwrap_or_default();
 
-        div()
+        let dropdown = div()
             .relative()
             .w_full()
             .child(
@@ -107,8 +106,6 @@ impl Render for Dropdown {
                                 .enumerate()
                                 .map(|(idx, option)| {
                                     let is_selected = idx == self.selected_index;
-                                    let on_select = self.on_select.clone();
-                                    let value = option.value.clone();
 
                                     div()
                                         .w_full()
@@ -117,14 +114,13 @@ impl Render for Dropdown {
                                         .text_color(fg_color)
                                         .when(is_selected, |this| { this.bg(hover_color) })
                                         .hover(|style| style.bg(hover_color))
-                                        .cursor_pointer()
-                                        .when_some(on_select, |this, handler| {
-                                            this.on_click(move |_, cx| handler(value.clone(), cx))
-                                        })
                                         .child(option.label.clone())
                                 })
                         )
                 )
-            })
+            });
+        Clickable::new(dropdown).when_some(self.on_select.clone(), |clickable, handler| {
+            clickable.on_click(handler)
+        })
     }
 }

@@ -3,6 +3,7 @@ use gpui::*;
 use gpui::prelude::FluentBuilder;
 use parking_lot::RwLock;
 use std::sync::Arc;
+use crate::components::clickable::{ Clickable, ClickHandler };
 
 pub struct Tab {
     pub id: String,
@@ -15,8 +16,8 @@ pub struct Tab {
 pub struct Tabs {
     theme: Arc<RwLock<Theme>>,
     tabs: Vec<Tab>,
-    on_select: Option<Arc<dyn Fn(String, &mut Context<Self>) + Send + Sync>>,
-    on_close: Option<Arc<dyn Fn(String, &mut Context<Self>) + Send + Sync>>,
+    on_select: Option<ClickHandler>,
+    on_close: Option<ClickHandler>,
 }
 
 impl Tabs {
@@ -33,17 +34,13 @@ impl Tabs {
         self.tabs.push(tab);
     }
 
-    pub fn on_select<F>(mut self, handler: F) -> Self
-        where F: Fn(String, &mut Context<Self>) + Send + Sync + 'static
-    {
-        self.on_select = Some(Arc::new(handler));
+    pub fn on_select(mut self, handler: ClickHandler) -> Self {
+        self.on_select = Some(handler);
         self
     }
 
-    pub fn on_close<F>(mut self, handler: F) -> Self
-        where F: Fn(String, &mut Context<Self>) + Send + Sync + 'static
-    {
-        self.on_close = Some(Arc::new(handler));
+    pub fn on_close(mut self, handler: ClickHandler) -> Self {
+        self.on_close = Some(handler);
         self
     }
 }
@@ -54,7 +51,7 @@ impl Render for Tabs {
         let bg_color = theme.parse_color(&theme.background.panel);
         let border_color = theme.parse_color(&theme.ui.border);
 
-        div()
+        let tabs = div()
             .h_10()
             .w_full()
             .bg(bg_color)
@@ -89,12 +86,12 @@ impl Render for Tabs {
                         .border_r_1()
                         .border_color(border_color)
                         .cursor_pointer()
-                        .when_some(on_select.clone(), |this, handler| {
-                            this.on_mouse_down(
-                                MouseButton::Left,
-                                move |_mouse_event, _window, cx| handler(tab_id.clone(), &mut cx) // TODO: fix handler type
-                            )
-                        })
+                        // .when_some(on_select.clone(), |this, handler| {
+                        //     this.on_mouse_down(
+                        //         MouseButton::Left,
+                        //         move |_mouse_event, _window, cx| handler(tab_id.clone(), &mut cx) // TODO: fix handler type
+                        //     )
+                        // })
                         .when(tab.is_dirty, |this| { this.child(div().child("●").text_xs()) })
                         .child(div().child(tab.label.clone()))
                         .when(tab.closeable, |this| {
@@ -104,17 +101,12 @@ impl Render for Tabs {
                                     .text_xs()
                                     .opacity(0.6)
                                     .hover(|style| style.opacity(1.0))
-                                    .when_some(on_close, |this, handler| {
-                                        this.on_mouse_down(
-                                            MouseButton::Left,
-                                            move |_mouse_event, _window, cx| {
-                                                handler(tab_id_close.clone(), &mut cx) // TODO: fix handler type
-                                            }
-                                        )
-                                    })
                             )
                         })
                 })
-            )
+            );
+        Clickable::new(tabs).when_some(self.on_select.clone(), |clickable, handler| {
+            clickable.on_click(handler)
+        })
     }
 }

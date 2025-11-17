@@ -1,15 +1,23 @@
-use crate::theme::Theme;
+use crate::{ components::{ Button, ButtonVariant }, theme::Theme };
 use gpui::*;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
 pub struct NavBar {
     theme: Arc<RwLock<Theme>>,
+    file_button: Entity<Button>,
+    edit_button: Entity<Button>,
+    view_button: Entity<Button>,
+    help_button: Entity<Button>,
 }
 
 impl NavBar {
-    pub fn new(theme: Arc<RwLock<Theme>>, _cx: &mut Context<Self>) -> Self {
-        Self { theme }
+    pub fn new(theme: Arc<RwLock<Theme>>, cx: &mut Context<Self>) -> Self {
+        let file_button = cx.new(|_cx| Button::new("File", ButtonVariant::Primary, theme.clone()));
+        let edit_button = cx.new(|_cx| Button::new("Edit", ButtonVariant::Primary, theme.clone()));
+        let view_button = cx.new(|_cx| Button::new("View", ButtonVariant::Primary, theme.clone()));
+        let help_button = cx.new(|_cx| Button::new("Help", ButtonVariant::Primary, theme.clone()));
+        Self { theme, file_button, edit_button, view_button, help_button }
     }
 }
 
@@ -44,12 +52,13 @@ impl Render for NavBar {
                             .flex_row()
                             .gap_2()
                             .text_sm()
-                            .child(div().child("File"))
-                            .child(div().child("Edit"))
-                            .child(div().child("View"))
-                            .child(div().child("Help"))
+                            .child(self.file_button.clone())
+                            .child(self.edit_button.clone())
+                            .child(self.view_button.clone())
+                            .child(self.help_button.clone())
                     )
             )
+
             .child(
                 div()
                     .flex()
